@@ -1126,7 +1126,15 @@ def get_code_results(code: str, variables=None):
             elif isinstance(var, dict):
                 variable_context[var.get("variable_name")] = var.get("variable_value")
 
-    _locals = {"results": results, **variable_context}
+    def load_table(data_source: str, table_name: str, limit: int = 100_000):
+        """Load a data source table (by its Insights table name) as a
+        pandas DataFrame, so scripts can post-process synced data —
+        e.g. stored procedure results or warehouse tables."""
+        table = InsightsTablev3.get_ibis_table(data_source, table_name)
+        data, _ = execute_ibis_query(table.head(limit), cache_expiry=60)
+        return data
+
+    _locals = {"results": results, "load_table": load_table, **variable_context}
     with ensure_rollback():
         _, _locals = safe_exec(
             code,
