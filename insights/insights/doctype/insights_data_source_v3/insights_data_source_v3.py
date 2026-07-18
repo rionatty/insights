@@ -29,7 +29,11 @@ from .connectors.frappe_db import (
     is_frappe_db,
 )
 from .connectors.mariadb import get_mariadb_connection
-from .connectors.mssql import get_mssql_connection, get_mssql_table_list
+from .connectors.mssql import (
+    get_mssql_connection,
+    get_mssql_table_list,
+    is_stored_procedure,
+)
 from .connectors.postgresql import get_postgres_connection
 from .connectors.rest_api import RestAPIClient
 from .connectors.sap_b1_service_layer import get_b1sl_table_list
@@ -148,6 +152,9 @@ class InsightsDataSourceDocument:
                 or self.host != doc_before.host
                 or self.port != doc_before.port
                 or self.use_ssl != doc_before.use_ssl
+                or self.include_tables != doc_before.include_tables
+                or self.include_views != doc_before.include_views
+                or self.include_stored_procedures != doc_before.include_stored_procedures
             )
 
     def on_trash(self):
@@ -253,6 +260,9 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
         enable_stored_procedure_execution: DF.Check
         host: DF.Data | None
         http_headers: DF.JSON | None
+        include_stored_procedures: DF.Check
+        include_tables: DF.Check
+        include_views: DF.Check
         is_ducklake: DF.Check
         is_frappe_db: DF.Check
         is_site_db: DF.Check
@@ -478,6 +488,11 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
 
     def get_ibis_table(self, table_name):
         if self.database_type in ("SAP HANA", "SAP B1 Service Layer"):
+            warehouse_table = insights.warehouse.get_table(self.name, table_name)
+            return warehouse_table.get_ibis_table(import_if_not_exists=True)
+        if self.database_type == "MSSQL" and is_stored_procedure(table_name):
+            # stored procedures cannot be queried live; their result set
+            # is imported into the warehouse on first use
             warehouse_table = insights.warehouse.get_table(self.name, table_name)
             return warehouse_table.get_ibis_table(import_if_not_exists=True)
 

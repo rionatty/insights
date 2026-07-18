@@ -24,6 +24,9 @@
   "host",
   "port",
   "use_ssl",
+  "include_tables",
+  "include_views",
+  "include_stored_procedures",
   "is_ducklake",
   "is_site_db",
   "is_frappe_db",
@@ -76,6 +79,27 @@
    "fieldname": "use_ssl",
    "fieldtype": "Check",
    "label": "Use SSL"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:['MSSQL', 'SAP HANA'].includes(doc.database_type)",
+   "fieldname": "include_tables",
+   "fieldtype": "Check",
+   "label": "Include Tables"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:['MSSQL', 'SAP HANA'].includes(doc.database_type)",
+   "fieldname": "include_views",
+   "fieldtype": "Check",
+   "label": "Include Views"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.database_type == 'MSSQL'",
+   "fieldname": "include_stored_procedures",
+   "fieldtype": "Check",
+   "label": "Include Stored Procedures"
   },
   {
    "default": "0",

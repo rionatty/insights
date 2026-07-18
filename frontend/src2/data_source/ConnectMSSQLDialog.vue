@@ -18,6 +18,9 @@ const database = ref<MSSQLDataSource>({
 	username: '',
 	password: '',
 	use_ssl: false,
+	include_tables: true,
+	include_views: true,
+	include_stored_procedures: false,
 })
 
 const form = ref()
@@ -65,6 +68,13 @@ const fields = [
 		type: 'password',
 		placeholder: '**********',
 		required: true,
+	},
+	{ label: __('Include Tables?'), name: 'include_tables', type: 'checkbox' },
+	{ label: __('Include Views?'), name: 'include_views', type: 'checkbox' },
+	{
+		label: __('Include Stored Procedures?'),
+		name: 'include_stored_procedures',
+		type: 'checkbox',
 	},
 ]
 

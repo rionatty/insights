@@ -411,6 +411,9 @@ def make_data_source(data_source):
     ds.database_name = data_source.database_name
     ds.schema = data_source.schema
     ds.use_ssl = data_source.use_ssl
+    ds.include_tables = data_source.include_tables
+    ds.include_views = data_source.include_views
+    ds.include_stored_procedures = data_source.include_stored_procedures
     ds.connection_string = data_source.connection_string
     return ds
 

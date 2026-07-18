@@ -74,21 +74,27 @@ def get_hana_client(data_source):
 
 
 def get_hana_table_list(data_source) -> list[str]:
+    from .mssql import get_listing_flags
+
+    include_tables, include_views, _ = get_listing_flags(data_source)
     schema = get_hana_schema_name(data_source)
     conn = get_hana_client(data_source)
     try:
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT TABLE_NAME FROM SYS.TABLES WHERE SCHEMA_NAME = ? ORDER BY TABLE_NAME",
-            (schema,),
-        )
-        tables = [row[0] for row in cursor.fetchall()]
-        cursor.execute(
-            "SELECT VIEW_NAME FROM SYS.VIEWS WHERE SCHEMA_NAME = ? ORDER BY VIEW_NAME",
-            (schema,),
-        )
-        views = [row[0] for row in cursor.fetchall()]
-        return tables + views
+        names = []
+        if include_tables:
+            cursor.execute(
+                "SELECT TABLE_NAME FROM SYS.TABLES WHERE SCHEMA_NAME = ? ORDER BY TABLE_NAME",
+                (schema,),
+            )
+            names.extend(row[0] for row in cursor.fetchall())
+        if include_views:
+            cursor.execute(
+                "SELECT VIEW_NAME FROM SYS.VIEWS WHERE SCHEMA_NAME = ? ORDER BY VIEW_NAME",
+                (schema,),
+            )
+            names.extend(row[0] for row in cursor.fetchall())
+        return names
     finally:
         conn.close()
 

@@ -19,6 +19,8 @@ const database = ref<SAPHANADataSource>({
 	username: '',
 	password: '',
 	use_ssl: false,
+	include_tables: true,
+	include_views: true,
 })
 
 const form = ref()
@@ -73,6 +75,8 @@ const fields = [
 		required: true,
 	},
 	{ label: __('Use secure connection (SSL)?'), name: 'use_ssl', type: 'checkbox' },
+	{ label: __('Include Tables?'), name: 'include_tables', type: 'checkbox' },
+	{ label: __('Include Views?'), name: 'include_views', type: 'checkbox' },
 ]
 
 const sources = useDataSourceStore()

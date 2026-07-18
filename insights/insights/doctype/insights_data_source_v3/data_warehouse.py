@@ -338,6 +338,11 @@ class WarehouseTable:
             from .connectors.sap_b1_service_layer import get_b1sl_ibis_schema
 
             return get_b1sl_ibis_schema(ds, self.table_name)
+        if ds.database_type == "MSSQL":
+            from .connectors.mssql import get_mssql_procedure_schema, is_stored_procedure
+
+            if is_stored_procedure(self.table_name):
+                return get_mssql_procedure_schema(ds, self.table_name)
         return self.get_remote_table().schema()
 
     def enqueue_import(self):
@@ -968,6 +973,83 @@ class B1ServiceLayerTableImporter(WarehouseTableImporter):
         return total_rows
 
 
+class MssqlProcedureImporter(WarehouseTableImporter):
+    """Imports the result set of an MSSQL stored procedure into the warehouse.
+
+    Stored procedures cannot be queried like tables, so they are executed
+    once per import and their result set is streamed to the warehouse.
+    Only parameterless procedures that return a result set are supported.
+    """
+
+    def __init__(self, table: WarehouseTable):
+        super().__init__(table)
+        self.doc = None
+        self.exec_sql = ""
+
+    def prepare_remote_table(self):
+        from .connectors.mssql import get_mssql_procedure_schema, get_procedure_exec_sql
+
+        self.doc = InsightsDataSourcev3.get_doc(self.table.data_source)
+        self.remote_table_schema = get_mssql_procedure_schema(self.doc, self.table.table_name)
+        self.exec_sql = get_procedure_exec_sql(self.table.table_name)
+
+        if self.settings.before_import_script:
+            self._log("Warning: before-import scripts are not supported for stored procedures; ignoring.")
+        if self.settings.sync_mode == "Incremental":
+            self._log("Warning: incremental sync is not supported for stored procedures; doing full import.")
+
+        self.cursor_column = ""
+        self.dedupe_key_column = ""
+        self.writer_mode = "replace"
+        self.log.db_set("query", self.exec_sql, commit=True)
+
+    def calculate_batch_size(self) -> int:
+        # the procedure is executed only once, in process_batches; use a
+        # fixed batch size instead of sampling to avoid running it twice
+        batch_size = 10_000
+        self.log.db_set({"batch_size": batch_size}, commit=True)
+        return batch_size
+
+    def _to_dataframe(self, cursor, rows) -> pd.DataFrame:
+        columns = [d[0] for d in cursor.description]
+        df = pd.DataFrame([tuple(row) for row in rows], columns=columns)
+        for name, dtype in self.remote_table_schema.items():
+            if name not in df.columns:
+                df[name] = None
+            if dtype.is_floating():
+                df[name] = pd.to_numeric(df[name], errors="coerce")
+            elif dtype.is_timestamp():
+                df[name] = pd.to_datetime(df[name], errors="coerce")
+        return df[list(self.remote_table_schema.names)]
+
+    def process_batches(self, batch_size: int, writer: WarehouseTableWriter) -> int:
+        db = self.doc._get_ibis_backend()
+        batch_number = 0
+        total_rows = 0
+        row_limit = int(self.settings.row_limit)
+
+        self._log(f"Executing: {self.exec_sql}")
+        cursor = db.raw_sql(self.exec_sql)
+        try:
+            while total_rows < row_limit:
+                rows = cursor.fetchmany(min(batch_size, row_limit - total_rows))
+                if not rows:
+                    break
+
+                self._log(f"Processing batch: {batch_number + 1}")
+                batch = self._to_dataframe(cursor, rows)
+                writer.insert(batch)
+
+                total_rows += len(batch)
+                batch_number += 1
+                self._log(f"Rows: {len(batch)} Total Rows: {total_rows}")
+        finally:
+            cursor.close()
+
+        self._log(f"Total Batches: {batch_number} Total Rows: {total_rows}")
+        return total_rows
+
+
 def enqueue_warehouse_table_import(data_source: str, table_name: str):
     job_id = f"import_{frappe.scrub(data_source)}_{frappe.scrub(table_name)}"
     frappe.enqueue(
@@ -984,10 +1066,14 @@ def enqueue_warehouse_table_import(data_source: str, table_name: str):
 def execute_warehouse_table_import(data_source: str, table_name: str):
     table = WarehouseTable(data_source, table_name)
     database_type = frappe.db.get_value("Insights Data Source v3", data_source, "database_type")
+    from .connectors.mssql import is_stored_procedure
+
     if database_type == "SAP HANA":
         importer = HanaTableImporter(table)
     elif database_type == "SAP B1 Service Layer":
         importer = B1ServiceLayerTableImporter(table)
+    elif database_type == "MSSQL" and is_stored_procedure(table_name):
+        importer = MssqlProcedureImporter(table)
     else:
         importer = WarehouseTableImporter(table)
     importer.start_import()

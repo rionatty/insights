@@ -73,6 +73,8 @@ export type SAPHANADataSource = BaseDataSource & {
 	username: string
 	password: string
 	use_ssl: boolean
+	include_tables: boolean
+	include_views: boolean
 }
 
 export type MSSQLDataSource = BaseDataSource & {
@@ -83,6 +85,9 @@ export type MSSQLDataSource = BaseDataSource & {
 	username: string
 	password: string
 	use_ssl: boolean
+	include_tables: boolean
+	include_views: boolean
+	include_stored_procedures: boolean
 }
 
 export type B1ServiceLayerDataSource = BaseDataSource & {
