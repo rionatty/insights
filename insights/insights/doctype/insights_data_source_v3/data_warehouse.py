@@ -334,6 +334,10 @@ class WarehouseTable:
             from .connectors.sap_hana import get_hana_ibis_schema
 
             return get_hana_ibis_schema(ds, self.table_name)
+        if ds.database_type == "SAP B1 Service Layer":
+            from .connectors.sap_b1_service_layer import get_b1sl_ibis_schema
+
+            return get_b1sl_ibis_schema(ds, self.table_name)
         return self.get_remote_table().schema()
 
     def enqueue_import(self):
@@ -863,6 +867,107 @@ class HanaTableImporter(WarehouseTableImporter):
         return total_rows
 
 
+class B1ServiceLayerTableImporter(WarehouseTableImporter):
+    """Imports SAP B1 Service Layer entities into the warehouse.
+
+    Streams OData pages from the Service Layer and feeds them to the
+    WarehouseTableWriter. Nested collections (e.g. DocumentLines) are
+    dropped; only header-level scalar fields are imported.
+    """
+
+    def __init__(self, table: WarehouseTable):
+        super().__init__(table)
+        self.doc = None
+        self.filters = None
+        self.order_by = None
+        self.row_limit = None
+
+    def prepare_remote_table(self):
+        from .connectors.sap_b1_service_layer import build_b1sl_filter, get_b1sl_ibis_schema
+
+        self.doc = InsightsDataSourcev3.get_doc(self.table.data_source)
+        self.remote_table_schema = get_b1sl_ibis_schema(self.doc, self.table.table_name)
+
+        if self.settings.before_import_script:
+            self._log(
+                "Warning: before-import scripts are not supported for Service Layer sources; ignoring."
+            )
+
+        if self.settings.sync_mode == "Incremental":
+            self.cursor_column = self.settings.sync_cursor_column
+            self.dedupe_key_column = self.settings.sync_primary_key_column
+            self.sync_strategy = self.settings.sync_strategy or "Append Only"
+            bookmark = self._resolve_incremental_bookmark()
+            self.filters = build_b1sl_filter(self.cursor_column, bookmark)
+            self.order_by = f"{self.cursor_column} asc"
+            self.writer_mode = "upsert" if self.sync_strategy == "Update or Insert" else "append"
+            self._log(f"Incremental sync filter: {self.filters}")
+        else:
+            self.cursor_column = ""
+            self.dedupe_key_column = ""
+            self.writer_mode = "replace"
+            self.row_limit = int(self.settings.row_limit)
+
+        query = f"GET /b1s/v1/{self.table.table_name}"
+        if self.filters:
+            query += f"?$filter={self.filters}&$orderby={self.order_by}"
+        self.log.db_set("query", query, commit=True)
+
+    def calculate_batch_size(self) -> int:
+        from .connectors.sap_b1_service_layer import get_b1sl_sample
+
+        sample_rows = get_b1sl_sample(self.doc, self.table.table_name)
+        total_size = sum(sample_rows[column].memory_usage(deep=True) for column in sample_rows.columns)
+        row_size = total_size / len(sample_rows) / (1024 * 1024)
+        batch_size = int(self.settings.memory_limit / row_size) if row_size else 10_000
+        # the Service Layer caps page sizes server-side; keep requests moderate
+        batch_size = max(min(batch_size, 5000), 100)
+        self.log.db_set(
+            {
+                "row_size": row_size * 1024,
+                "batch_size": batch_size,
+            },
+            commit=True,
+        )
+        return batch_size
+
+    def _align_to_schema(self, df: pd.DataFrame) -> pd.DataFrame:
+        for name, dtype in self.remote_table_schema.items():
+            if name not in df.columns:
+                df[name] = None
+            if dtype.is_floating():
+                df[name] = pd.to_numeric(df[name], errors="coerce")
+            elif dtype.is_timestamp():
+                df[name] = pd.to_datetime(df[name], errors="coerce", format="mixed")
+        return df[list(self.remote_table_schema.names)]
+
+    def process_batches(self, batch_size: int, writer: WarehouseTableWriter) -> int:
+        from .connectors.sap_b1_service_layer import B1ServiceLayerClient, normalize_b1sl_dataframe
+
+        client = B1ServiceLayerClient(self.doc)
+        batch_number = 0
+        total_rows = 0
+
+        pages = client.fetch_pages(
+            self.table.table_name,
+            page_size=batch_size,
+            row_limit=self.row_limit,
+            filters=self.filters,
+            order_by=self.order_by,
+        )
+        for rows in pages:
+            self._log(f"Processing batch: {batch_number + 1}")
+            batch = self._align_to_schema(normalize_b1sl_dataframe(rows))
+            writer.insert(batch)
+
+            total_rows += len(batch)
+            batch_number += 1
+            self._log(f"Rows: {len(batch)} Total Rows: {total_rows}")
+
+        self._log(f"Total Batches: {batch_number} Total Rows: {total_rows}")
+        return total_rows
+
+
 def enqueue_warehouse_table_import(data_source: str, table_name: str):
     job_id = f"import_{frappe.scrub(data_source)}_{frappe.scrub(table_name)}"
     frappe.enqueue(
@@ -881,6 +986,8 @@ def execute_warehouse_table_import(data_source: str, table_name: str):
     database_type = frappe.db.get_value("Insights Data Source v3", data_source, "database_type")
     if database_type == "SAP HANA":
         importer = HanaTableImporter(table)
+    elif database_type == "SAP B1 Service Layer":
+        importer = B1ServiceLayerTableImporter(table)
     else:
         importer = WarehouseTableImporter(table)
     importer.start_import()

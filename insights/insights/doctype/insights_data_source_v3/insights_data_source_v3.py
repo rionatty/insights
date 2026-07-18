@@ -32,6 +32,7 @@ from .connectors.mariadb import get_mariadb_connection
 from .connectors.mssql import get_mssql_connection
 from .connectors.postgresql import get_postgres_connection
 from .connectors.rest_api import RestAPIClient
+from .connectors.sap_b1_service_layer import get_b1sl_table_list
 from .connectors.sap_hana import get_hana_table_list, get_hana_warehouse_connection
 from .connectors.sqlite import get_sqlite_connection
 
@@ -131,7 +132,14 @@ class InsightsDataSourceDocument:
                 or self.bigquery_dataset_id != doc_before.bigquery_dataset_id
                 or self.bigquery_service_account_key != doc_before.bigquery_service_account_key
             )
-        elif self.database_type in ["MariaDB", "PostgreSQL", "ClickHouse", "MSSQL", "SAP HANA"]:
+        elif self.database_type in [
+            "MariaDB",
+            "PostgreSQL",
+            "ClickHouse",
+            "MSSQL",
+            "SAP HANA",
+            "SAP B1 Service Layer",
+        ]:
             return (
                 self.database_name != doc_before.database_name
                 or self.schema != doc_before.schema
@@ -193,6 +201,9 @@ class InsightsDataSourceDocument:
         if self.database_type == "SAP HANA":
             # database_name (tenant) and schema are optional for HANA
             mandatory = ("host", "port", "username", "password")
+        elif self.database_type == "SAP B1 Service Layer":
+            # database_name holds the company database, required for login
+            mandatory = ("host", "username", "password", "database_name")
         for field in mandatory:
             if not self.get(field):
                 frappe.throw(f"{field} is mandatory for Database")
@@ -228,7 +239,17 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
         bigquery_service_account_key: DF.JSON | None
         connection_string: DF.Text | None
         database_name: DF.Data | None
-        database_type: DF.Literal["MariaDB", "PostgreSQL", "SQLite", "DuckDB", "BigQuery", "ClickHouse", "SAP HANA", "MSSQL"]
+        database_type: DF.Literal[
+            "MariaDB",
+            "PostgreSQL",
+            "SQLite",
+            "DuckDB",
+            "BigQuery",
+            "ClickHouse",
+            "SAP HANA",
+            "MSSQL",
+            "SAP B1 Service Layer",
+        ]
         enable_stored_procedure_execution: DF.Check
         host: DF.Data | None
         http_headers: DF.JSON | None
@@ -331,8 +352,8 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
             return get_mssql_connection(self)
         if self.database_type == "ClickHouse":
             return get_clickhouse_connection(self)
-        if self.database_type == "SAP HANA":
-            # HANA has no ibis backend; queries run on the local warehouse
+        if self.database_type in ("SAP HANA", "SAP B1 Service Layer"):
+            # no ibis backend for these; queries run on the local warehouse
             # where tables are imported on first use
             return get_hana_warehouse_connection(self)
 
@@ -342,6 +363,8 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
         if self.database_type == "SAP HANA":
             # list tables from the HANA catalog, not the warehouse
             return get_hana_table_list(self)
+        if self.database_type == "SAP B1 Service Layer":
+            return get_b1sl_table_list(self)
 
         db = self._get_ibis_backend()
 
@@ -451,7 +474,7 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
             )
 
     def get_ibis_table(self, table_name):
-        if self.database_type == "SAP HANA":
+        if self.database_type in ("SAP HANA", "SAP B1 Service Layer"):
             warehouse_table = insights.warehouse.get_table(self.name, table_name)
             return warehouse_table.get_ibis_table(import_if_not_exists=True)
 
@@ -498,6 +521,7 @@ def db_type_to_sqlglot_dialect(db_type: str) -> str | None:
         "BigQuery": "bigquery",
         "MSSQL": "tsql",
         "ClickHouse": "clickhouse",
-        # HANA sources are queried through the local DuckDB warehouse
+        # HANA and Service Layer sources are queried through the local warehouse
         "SAP HANA": "duckdb",
+        "SAP B1 Service Layer": "duckdb",
     }.get(db_type)

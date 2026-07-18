@@ -15,6 +15,7 @@ import ConnectDuckDBDialog from './ConnectDuckDBDialog.vue'
 import ConnectClickhouseDialog from './ConnectClickhouseDialog.vue'
 import ConnectSAPHANADialog from './ConnectSAPHANADialog.vue'
 import ConnectMSSQLDialog from './ConnectMSSQLDialog.vue'
+import ConnectB1ServiceLayerDialog from './ConnectB1ServiceLayerDialog.vue'
 import { __ } from '../translation'
 
 const dataSourceStore = useDataSourceStore()
@@ -37,6 +38,7 @@ const showNewClickHouseDialog = ref(false)
 const showNewDuckDBDialog = ref(false)
 const showNewSAPHANADialog = ref(false)
 const showNewMSSQLDialog = ref(false)
+const showNewB1ServiceLayerDialog = ref(false)
 const showCSVFileUploadDialog = ref(false)
 
 const sourceTypes = [
@@ -92,6 +94,15 @@ const sourceTypes = [
 		onClick: () => {
 			showNewSourceDialog.value = false
 			showNewMSSQLDialog.value = true
+		},
+	},
+	{
+		label: __('SAP B1 Service Layer'),
+		icon: getDatabaseLogo('SAP B1 Service Layer'),
+		description: __('Connect to SAP Business One via Service Layer'),
+		onClick: () => {
+			showNewSourceDialog.value = false
+			showNewB1ServiceLayerDialog.value = true
 		},
 	},
 	{
@@ -198,5 +209,6 @@ document.title = __('Data Sources | Insights')
 	<ConnectDuckDBDialog v-model="showNewDuckDBDialog" />
 	<ConnectSAPHANADialog v-model="showNewSAPHANADialog" />
 	<ConnectMSSQLDialog v-model="showNewMSSQLDialog" />
+	<ConnectB1ServiceLayerDialog v-model="showNewB1ServiceLayerDialog" />
 	<UploadCSVFileDialog v-model="showCSVFileUploadDialog" />
 </template>

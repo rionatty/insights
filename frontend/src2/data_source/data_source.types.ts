@@ -7,6 +7,7 @@ export type DatabaseType =
 	| 'ClickHouse'
 	| 'SAP HANA'
 	| 'MSSQL'
+	| 'SAP B1 Service Layer'
 export type DataSourceListItem = {
 	title: string
 	name: string
@@ -84,6 +85,16 @@ export type MSSQLDataSource = BaseDataSource & {
 	use_ssl: boolean
 }
 
+export type B1ServiceLayerDataSource = BaseDataSource & {
+	database_type: 'SAP B1 Service Layer'
+	host: string
+	port: number
+	database_name: string
+	username: string
+	password: string
+	use_ssl: boolean
+}
+
 export type DataSource =
 	| MariaDBDataSource
 	| PostgreSQLDataSource
@@ -91,3 +102,4 @@ export type DataSource =
 	| ClickHouseDataSource
 	| SAPHANADataSource
 	| MSSQLDataSource
+	| B1ServiceLayerDataSource

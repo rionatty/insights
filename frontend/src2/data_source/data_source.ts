@@ -109,7 +109,7 @@ export function getDatabaseLogo(database_type: DatabaseType, size: 'sm' | 'md' =
 	if (database_type === 'DuckDB') {
 		comp = defineAsyncComponent(() => import('../components/Icons/DuckDBIcon.vue'))
 	}
-	if (database_type === 'SAP HANA') {
+	if (database_type === 'SAP HANA' || database_type === 'SAP B1 Service Layer') {
 		comp = defineAsyncComponent(() => import('../components/Icons/SAPHANAIcon.vue'))
 	}
 	if (database_type === 'MSSQL') {
