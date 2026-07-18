@@ -29,7 +29,7 @@ from .connectors.frappe_db import (
     is_frappe_db,
 )
 from .connectors.mariadb import get_mariadb_connection
-from .connectors.mssql import get_mssql_connection
+from .connectors.mssql import get_mssql_connection, get_mssql_table_list
 from .connectors.postgresql import get_postgres_connection
 from .connectors.rest_api import RestAPIClient
 from .connectors.sap_b1_service_layer import get_b1sl_table_list
@@ -365,6 +365,9 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
             return get_hana_table_list(self)
         if self.database_type == "SAP B1 Service Layer":
             return get_b1sl_table_list(self)
+        if self.database_type == "MSSQL":
+            # includes views, which ibis's list_tables() omits
+            return get_mssql_table_list(self)
 
         db = self._get_ibis_backend()
 

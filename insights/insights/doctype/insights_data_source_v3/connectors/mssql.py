@@ -24,3 +24,17 @@ def get_mssql_connection(data_source):
         database=data_source.database_name,
         driver=frappe.conf.get("mssql_odbc_driver"),
     )
+
+
+def get_mssql_table_list(data_source) -> list[str]:
+    # ibis's list_tables() only returns base tables; include views too
+    db = data_source._get_ibis_backend()
+    cursor = db.raw_sql(
+        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES "
+        "WHERE TABLE_TYPE IN ('BASE TABLE', 'VIEW') AND TABLE_SCHEMA = 'dbo' "
+        "ORDER BY TABLE_NAME"
+    )
+    try:
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        cursor.close()
