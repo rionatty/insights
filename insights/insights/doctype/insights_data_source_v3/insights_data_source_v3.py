@@ -228,7 +228,7 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
         bigquery_service_account_key: DF.JSON | None
         connection_string: DF.Text | None
         database_name: DF.Data | None
-        database_type: DF.Literal["MariaDB", "PostgreSQL", "SQLite", "DuckDB", "BigQuery", "ClickHouse", "SAP HANA"]
+        database_type: DF.Literal["MariaDB", "PostgreSQL", "SQLite", "DuckDB", "BigQuery", "ClickHouse", "SAP HANA", "MSSQL"]
         enable_stored_procedure_execution: DF.Check
         host: DF.Data | None
         http_headers: DF.JSON | None

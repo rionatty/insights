@@ -14,6 +14,7 @@ import UploadCSVFileDialog from './UploadCSVFileDialog.vue'
 import ConnectDuckDBDialog from './ConnectDuckDBDialog.vue'
 import ConnectClickhouseDialog from './ConnectClickhouseDialog.vue'
 import ConnectSAPHANADialog from './ConnectSAPHANADialog.vue'
+import ConnectMSSQLDialog from './ConnectMSSQLDialog.vue'
 import { __ } from '../translation'
 
 const dataSourceStore = useDataSourceStore()
@@ -35,6 +36,7 @@ const showNewPostgreSQLDialog = ref(false)
 const showNewClickHouseDialog = ref(false)
 const showNewDuckDBDialog = ref(false)
 const showNewSAPHANADialog = ref(false)
+const showNewMSSQLDialog = ref(false)
 const showCSVFileUploadDialog = ref(false)
 
 const sourceTypes = [
@@ -81,6 +83,15 @@ const sourceTypes = [
 		onClick: () => {
 			showNewSourceDialog.value = false
 			showNewSAPHANADialog.value = true
+		},
+	},
+	{
+		label: __('Microsoft SQL Server'),
+		icon: getDatabaseLogo('MSSQL'),
+		description: __('Connect to SQL Server database'),
+		onClick: () => {
+			showNewSourceDialog.value = false
+			showNewMSSQLDialog.value = true
 		},
 	},
 	{
@@ -186,5 +197,6 @@ document.title = __('Data Sources | Insights')
 	<ConnectClickhouseDialog v-model="showNewClickHouseDialog" />
 	<ConnectDuckDBDialog v-model="showNewDuckDBDialog" />
 	<ConnectSAPHANADialog v-model="showNewSAPHANADialog" />
+	<ConnectMSSQLDialog v-model="showNewMSSQLDialog" />
 	<UploadCSVFileDialog v-model="showCSVFileUploadDialog" />
 </template>

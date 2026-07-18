@@ -112,6 +112,9 @@ export function getDatabaseLogo(database_type: DatabaseType, size: 'sm' | 'md' =
 	if (database_type === 'SAP HANA') {
 		comp = defineAsyncComponent(() => import('../components/Icons/SAPHANAIcon.vue'))
 	}
+	if (database_type === 'MSSQL') {
+		comp = defineAsyncComponent(() => import('../components/Icons/MSSQLIcon.vue'))
+	}
 
 	let sizeClass = size === 'sm' ? 'size-5' : 'size-8'
 	if (size == 'sm' && database_type === 'ClickHouse') {

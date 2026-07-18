@@ -59,7 +59,7 @@
    "fieldname": "database_type",
    "fieldtype": "Select",
    "label": "Database Type",
-   "options": "MariaDB\nPostgreSQL\nSQLite\nDuckDB\nBigQuery\nClickHouse\nSAP HANA"
+   "options": "MariaDB\nPostgreSQL\nSQLite\nDuckDB\nBigQuery\nClickHouse\nSAP HANA\nMSSQL"
   },
   {
    "fieldname": "host",

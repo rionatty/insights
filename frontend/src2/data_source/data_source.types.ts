@@ -1,5 +1,12 @@
 
-export type DatabaseType = 'MariaDB' | 'PostgreSQL' | 'SQLite' | 'DuckDB' | 'ClickHouse' | 'SAP HANA'
+export type DatabaseType =
+	| 'MariaDB'
+	| 'PostgreSQL'
+	| 'SQLite'
+	| 'DuckDB'
+	| 'ClickHouse'
+	| 'SAP HANA'
+	| 'MSSQL'
 export type DataSourceListItem = {
 	title: string
 	name: string
@@ -67,9 +74,20 @@ export type SAPHANADataSource = BaseDataSource & {
 	use_ssl: boolean
 }
 
+export type MSSQLDataSource = BaseDataSource & {
+	database_type: 'MSSQL'
+	host: string
+	port: number
+	database_name: string
+	username: string
+	password: string
+	use_ssl: boolean
+}
+
 export type DataSource =
 	| MariaDBDataSource
 	| PostgreSQLDataSource
 	| DuckDBDataSource
 	| ClickHouseDataSource
 	| SAPHANADataSource
+	| MSSQLDataSource
