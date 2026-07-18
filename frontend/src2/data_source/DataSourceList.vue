@@ -13,6 +13,7 @@ import { DataSourceListItem } from './data_source.types'
 import UploadCSVFileDialog from './UploadCSVFileDialog.vue'
 import ConnectDuckDBDialog from './ConnectDuckDBDialog.vue'
 import ConnectClickhouseDialog from './ConnectClickhouseDialog.vue'
+import ConnectSAPHANADialog from './ConnectSAPHANADialog.vue'
 import { __ } from '../translation'
 
 const dataSourceStore = useDataSourceStore()
@@ -33,6 +34,7 @@ const showNewMariaDBDialog = ref(false)
 const showNewPostgreSQLDialog = ref(false)
 const showNewClickHouseDialog = ref(false)
 const showNewDuckDBDialog = ref(false)
+const showNewSAPHANADialog = ref(false)
 const showCSVFileUploadDialog = ref(false)
 
 const sourceTypes = [
@@ -70,6 +72,15 @@ const sourceTypes = [
 		onClick: () => {
 			showNewSourceDialog.value = false
 			showNewDuckDBDialog.value = true
+		},
+	},
+	{
+		label: __('SAP HANA'),
+		icon: getDatabaseLogo('SAP HANA'),
+		description: __('Connect to SAP HANA database'),
+		onClick: () => {
+			showNewSourceDialog.value = false
+			showNewSAPHANADialog.value = true
 		},
 	},
 	{
@@ -174,5 +185,6 @@ document.title = __('Data Sources | Insights')
 	<ConnectPostgreSQLDialog v-model="showNewPostgreSQLDialog" />
 	<ConnectClickhouseDialog v-model="showNewClickHouseDialog" />
 	<ConnectDuckDBDialog v-model="showNewDuckDBDialog" />
+	<ConnectSAPHANADialog v-model="showNewSAPHANADialog" />
 	<UploadCSVFileDialog v-model="showCSVFileUploadDialog" />
 </template>

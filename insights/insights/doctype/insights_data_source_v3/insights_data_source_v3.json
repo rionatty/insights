@@ -59,7 +59,7 @@
    "fieldname": "database_type",
    "fieldtype": "Select",
    "label": "Database Type",
-   "options": "MariaDB\nPostgreSQL\nSQLite\nDuckDB\nBigQuery\nClickHouse"
+   "options": "MariaDB\nPostgreSQL\nSQLite\nDuckDB\nBigQuery\nClickHouse\nSAP HANA"
   },
   {
    "fieldname": "host",
@@ -148,7 +148,7 @@
    "label": "Enable Stored Procedure Execution"
   },
   {
-   "depends_on": "eval:doc.database_type == 'PostgreSQL'",
+   "depends_on": "eval:doc.database_type == 'PostgreSQL' || doc.database_type == 'SAP HANA'",
    "fieldname": "schema",
    "fieldtype": "Data",
    "label": "Schema"

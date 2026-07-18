@@ -308,10 +308,9 @@ class WarehouseTable:
         except TableNotFound:
             if import_if_not_exists:
                 self.enqueue_import()
-                remote_table = self.get_remote_table()
                 return insights.warehouse.db.create_table(
                     self.warehouse_table_name,
-                    schema=remote_table.schema(),
+                    schema=self.get_remote_schema(),
                     database=self.schema,
                     temp=True,
                     overwrite=True,
@@ -327,6 +326,15 @@ class WarehouseTable:
     def get_remote_table(self) -> Expr:
         ds = InsightsDataSourcev3.get_doc(self.data_source)
         return ds.get_ibis_table(self.table_name)
+
+    def get_remote_schema(self) -> ibis.Schema:
+        ds = InsightsDataSourcev3.get_doc(self.data_source)
+        if ds.database_type == "SAP HANA":
+            # HANA has no ibis backend; read the schema from the catalog
+            from .connectors.sap_hana import get_hana_ibis_schema
+
+            return get_hana_ibis_schema(ds, self.table_name)
+        return self.get_remote_table().schema()
 
     def enqueue_import(self):
         if frappe.db.get_value("Insights Data Source v3", self.data_source, "type") == "REST API":
@@ -718,6 +726,143 @@ class WarehouseTableImporter:
         self.log.log_output(f"[{now()}] [{elapsed:.1f}s] {message}", commit=commit)
 
 
+class HanaTableImporter(WarehouseTableImporter):
+    """Imports SAP HANA tables into the warehouse.
+
+    HANA has no ibis backend, so instead of ibis expressions this importer
+    streams batches over a server-side hdbcli cursor and feeds them to the
+    same WarehouseTableWriter as the standard importer.
+    """
+
+    def __init__(self, table: WarehouseTable):
+        super().__init__(table)
+        self.doc = None
+        self.query = ""
+        self.query_params = []
+        self.bookmark = None
+
+    def prepare_remote_table(self):
+        from .connectors.sap_hana import get_hana_ibis_schema, get_hana_schema_name
+
+        self.doc = InsightsDataSourcev3.get_doc(self.table.data_source)
+        self.hana_schema = get_hana_schema_name(self.doc)
+        self.remote_table_schema = get_hana_ibis_schema(self.doc, self.table.table_name)
+
+        if self.settings.before_import_script:
+            self._log("Warning: before-import scripts are not supported for SAP HANA sources; ignoring.")
+
+        if self.settings.sync_mode == "Incremental":
+            self.cursor_column = self.settings.sync_cursor_column
+            self.dedupe_key_column = self.settings.sync_primary_key_column
+            self.sync_strategy = self.settings.sync_strategy or "Append Only"
+            self.bookmark = self._resolve_incremental_bookmark()
+            self.writer_mode = "upsert" if self.sync_strategy == "Update or Insert" else "append"
+            self._log(f"Incremental sync: {self.cursor_column} > {self.bookmark}")
+        else:
+            self.cursor_column = ""
+            self.dedupe_key_column = ""
+            self.writer_mode = "replace"
+
+        self.query, self.query_params = self._build_query()
+        self.log.db_set("query", self.query, commit=True)
+
+    def _quote(self, name: str) -> str:
+        return '"' + name.replace('"', '""') + '"'
+
+    def _build_query(self) -> tuple[str, list]:
+        columns = ", ".join(self._quote(c) for c in self.remote_table_schema.names)
+        table = f"{self._quote(self.hana_schema)}.{self._quote(self.table.table_name)}"
+        sql = f"SELECT {columns} FROM {table}"  # noqa: S608
+        params = []
+
+        if self.settings.sync_mode == "Incremental" and self.cursor_column:
+            sql += f" WHERE {self._quote(self.cursor_column)} > ?"
+            params.append(str(self.bookmark))
+            sql += f" ORDER BY {self._quote(self.cursor_column)} ASC"
+        else:
+            sql += f" LIMIT {int(self.settings.row_limit)}"
+
+        return sql, params
+
+    def _fetch_dataframe(self, cursor, rows) -> pd.DataFrame:
+        columns = [d[0] for d in cursor.description]
+        df = pd.DataFrame([tuple(row) for row in rows], columns=columns)
+        # coerce python objects (e.g. Decimal) to the target dtypes so
+        # parquet serialization stays consistent across batches
+        for name, dtype in self.remote_table_schema.items():
+            if name not in df.columns:
+                continue
+            if dtype.is_floating():
+                df[name] = pd.to_numeric(df[name], errors="coerce")
+            elif dtype.is_timestamp():
+                df[name] = pd.to_datetime(df[name], errors="coerce")
+        return df
+
+    def calculate_batch_size(self) -> int:
+        from .connectors.sap_hana import get_hana_client
+
+        sample_size = 10
+        conn = get_hana_client(self.doc)
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                f"SELECT * FROM ({self.query}) AS sample_query LIMIT {sample_size}",  # noqa: S608
+                self.query_params,
+            )
+            sample_rows = self._fetch_dataframe(cursor, cursor.fetchall())
+        finally:
+            conn.close()
+
+        if sample_rows.empty:
+            return 100_000
+
+        total_size = sum(sample_rows[column].memory_usage(deep=True) for column in sample_rows.columns)
+        row_size = total_size / len(sample_rows) / (1024 * 1024)
+        batch_size = int(self.settings.memory_limit / row_size) if row_size else 100_000
+        batch_size = max(batch_size, 1000)
+        self.log.db_set(
+            {
+                "row_size": row_size * 1024,
+                "batch_size": batch_size,
+            },
+            commit=True,
+        )
+        return batch_size
+
+    def process_batches(self, batch_size: int, writer: WarehouseTableWriter) -> int:
+        from .connectors.sap_hana import get_hana_client
+
+        batch_number = 0
+        total_rows = 0
+
+        conn = get_hana_client(self.doc)
+        try:
+            cursor = conn.cursor()
+            self._log(f"Batch Query: \n{self.query}")
+            cursor.execute(self.query, self.query_params)
+
+            while True:
+                rows = cursor.fetchmany(batch_size)
+                if not rows:
+                    break
+
+                self._log(f"Processing batch: {batch_number + 1}")
+                batch = self._fetch_dataframe(cursor, rows)
+                writer.insert(batch)
+
+                total_rows += len(batch)
+                batch_number += 1
+                self._log(f"Rows: {len(batch)} Total Rows: {total_rows}")
+
+                if len(rows) < batch_size:
+                    break
+        finally:
+            conn.close()
+
+        self._log(f"Total Batches: {batch_number} Total Rows: {total_rows}")
+        return total_rows
+
+
 def enqueue_warehouse_table_import(data_source: str, table_name: str):
     job_id = f"import_{frappe.scrub(data_source)}_{frappe.scrub(table_name)}"
     frappe.enqueue(
@@ -733,7 +878,11 @@ def enqueue_warehouse_table_import(data_source: str, table_name: str):
 
 def execute_warehouse_table_import(data_source: str, table_name: str):
     table = WarehouseTable(data_source, table_name)
-    importer = WarehouseTableImporter(table)
+    database_type = frappe.db.get_value("Insights Data Source v3", data_source, "database_type")
+    if database_type == "SAP HANA":
+        importer = HanaTableImporter(table)
+    else:
+        importer = WarehouseTableImporter(table)
     importer.start_import()
 
 
