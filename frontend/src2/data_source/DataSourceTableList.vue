@@ -2,7 +2,7 @@
 import { watchDebounced } from '@vueuse/core'
 import { Breadcrumbs, ListView } from 'frappe-ui'
 import { MoreHorizontal, RefreshCcw, SearchIcon } from 'lucide-vue-next'
-import { h, ref, watchEffect } from 'vue'
+import { computed, h, ref, watchEffect } from 'vue'
 import useDataSourceStore from './data_source'
 import useTableStore, { DataSourceTable } from './tables'
 import { __ } from '../translation'
@@ -22,14 +22,33 @@ function updateTablesList() {
 	})
 }
 
+const objectTypeFilter = ref('All')
+const objectTypeOptions = [
+	{ label: __('All Objects'), value: 'All' },
+	{ label: __('Tables'), value: 'Table' },
+	{ label: __('Views'), value: 'View' },
+	{ label: __('Stored Procedures'), value: 'Procedure' },
+]
+const displayTables = computed(() => {
+	if (!filteredTables.value) return []
+	if (objectTypeFilter.value === 'All') return filteredTables.value
+	return filteredTables.value.filter(
+		(table) => (table.object_type || 'Table') === objectTypeFilter.value,
+	)
+})
+
 const listOptions = ref({
 	columns: [
 		{
 			label: __('Table Name'),
 			key: 'table_name',
 		},
+		{
+			label: __('Type'),
+			key: 'object_type',
+		},
 	],
-	rows: filteredTables,
+	rows: displayTables,
 	rowKey: 'table_name',
 	options: {
 		showTooltip: false,
@@ -76,6 +95,7 @@ watchEffect(() => {
 					<SearchIcon class="h-4 w-4 text-gray-500" />
 				</template>
 			</FormControl>
+			<FormControl type="select" v-model="objectTypeFilter" :options="objectTypeOptions" />
 			<Dropdown
 				:options="[
 					{

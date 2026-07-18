@@ -9,6 +9,7 @@ export type DataSourceTable = {
 	name: string
 	table_name: string
 	data_source: string
+	object_type?: 'Table' | 'View' | 'Procedure'
 	preview?: any[]
 }
 const tables = ref<Record<string, DataSourceTable[]>>({})

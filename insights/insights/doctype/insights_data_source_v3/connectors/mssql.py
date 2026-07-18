@@ -112,6 +112,28 @@ def is_stored_procedure(table_name: str) -> bool:
     return table_name.startswith(PROCEDURE_PREFIX)
 
 
+def get_mssql_object_types(data_source, tables: list[str]) -> dict[str, str]:
+    db = data_source._get_ibis_backend()
+    cursor = db.raw_sql(
+        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES "
+        "WHERE TABLE_TYPE = 'VIEW' AND TABLE_SCHEMA = 'dbo'"
+    )
+    try:
+        views = {row[0] for row in cursor.fetchall()}
+    finally:
+        cursor.close()
+
+    types = {}
+    for table in tables:
+        if is_stored_procedure(table):
+            types[table] = "Procedure"
+        elif table in views:
+            types[table] = "View"
+        else:
+            types[table] = "Table"
+    return types
+
+
 def get_procedure_exec_sql(table_name: str) -> str:
     procedure = table_name.removeprefix(PROCEDURE_PREFIX).replace("]", "]]")
     return f"EXEC dbo.[{procedure}]"

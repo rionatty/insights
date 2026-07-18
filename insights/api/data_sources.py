@@ -313,7 +313,7 @@ def get_data_source_tables(data_source: str | None = None, search_term: str | No
             "label": ["is", "set"] if not search_term else ["like", f"%{search_term}%"],
             "table": ["is", "set"] if not search_term else ["like", f"%{search_term}%"],
         },
-        fields=["name", "table", "label", "data_source", "last_synced_on"],
+        fields=["name", "table", "label", "data_source", "last_synced_on", "object_type"],
         limit=limit,
     )
 
@@ -327,6 +327,7 @@ def get_data_source_tables(data_source: str | None = None, search_term: str | No
                     "table_name": table.table,
                     "data_source": table.data_source,
                     "last_synced_on": table.last_synced_on,
+                    "object_type": table.object_type or "Table",
                 }
             )
         )

@@ -7,6 +7,7 @@
  "field_order": [
   "table",
   "label",
+  "object_type",
   "column_break_3",
   "data_source",
   "last_synced_on",
@@ -41,6 +42,15 @@
    "in_standard_filter": 1,
    "label": "Table",
    "reqd": 1
+  },
+  {
+   "default": "Table",
+   "fieldname": "object_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Object Type",
+   "options": "Table\nView\nProcedure",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_3",

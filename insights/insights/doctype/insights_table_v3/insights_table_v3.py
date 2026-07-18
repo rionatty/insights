@@ -31,6 +31,7 @@ class InsightsTablev3(Document):
         label: DF.Data
         last_sync_bookmark: DF.Data | None
         last_synced_on: DF.Datetime | None
+        object_type: DF.Literal["Table", "View", "Procedure"]
         row_limit: DF.Int
         stored: DF.Check
         sync_cursor_column: DF.Data | None
@@ -103,7 +104,8 @@ class InsightsTablev3(Document):
                 )
 
     @staticmethod
-    def bulk_create(data_source: str, tables: list[str]):
+    def bulk_create(data_source: str, tables: list[str], object_types: dict[str, str] | None = None):
+        object_types = object_types or {}
         frappe.db.bulk_insert(
             "Insights Table v3",
             [
@@ -111,6 +113,7 @@ class InsightsTablev3(Document):
                 "data_source",
                 "table",
                 "label",
+                "object_type",
                 "creation",
                 "modified",
                 "modified_by",
@@ -122,6 +125,7 @@ class InsightsTablev3(Document):
                     data_source,
                     table,
                     table,
+                    object_types.get(table, "Table"),
                     frappe.utils.now(),
                     frappe.utils.now(),
                     frappe.session.user,

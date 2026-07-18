@@ -444,6 +444,8 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
         if not remote_tables:
             return
 
+        object_types = self.get_object_type_map(remote_tables)
+
         if force:
             # TODO: prevent deletion of tables if the imports are customized
             frappe.db.delete(
@@ -460,11 +462,53 @@ class InsightsDataSourcev3(InsightsDataSourceDocument, Document):
             )
             new_tables = set(remote_tables) - set(existing_tables)
 
-        if not new_tables:
+        if new_tables:
+            InsightsTablev3.bulk_create(self.name, list(new_tables), object_types)
+            self.update_table_links(force)
+
+        self.update_object_types(object_types)
+
+    def get_object_type_map(self, tables: list[str]) -> dict[str, str]:
+        if self.database_type == "MSSQL":
+            from .connectors.mssql import get_mssql_object_types
+
+            return get_mssql_object_types(self, tables)
+        if self.database_type == "SAP HANA":
+            from .connectors.sap_hana import get_hana_object_types
+
+            return get_hana_object_types(self, tables)
+        return {}
+
+    def update_object_types(self, object_types: dict[str, str]):
+        """Refresh object_type on existing table docs (e.g. after upgrades
+        or when a table was replaced by a view of the same name)."""
+        if not object_types:
             return
 
-        InsightsTablev3.bulk_create(self.name, list(new_tables))
-        self.update_table_links(force)
+        views = [t for t, ot in object_types.items() if ot == "View"]
+        procedures = [t for t, ot in object_types.items() if ot == "Procedure"]
+
+        if views:
+            frappe.db.set_value(
+                "Insights Table v3",
+                {"data_source": self.name, "table": ["in", views]},
+                "object_type",
+                "View",
+                update_modified=False,
+            )
+        if procedures:
+            frappe.db.set_value(
+                "Insights Table v3",
+                {"data_source": self.name, "table": ["in", procedures]},
+                "object_type",
+                "Procedure",
+                update_modified=False,
+            )
+
+        filters = {"data_source": self.name}
+        if views or procedures:
+            filters["table"] = ["not in", views + procedures]
+        frappe.db.set_value("Insights Table v3", filters, "object_type", "Table", update_modified=False)
 
     def update_table_links(self, force=False):
         links = []

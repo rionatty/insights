@@ -99,6 +99,19 @@ def get_hana_table_list(data_source) -> list[str]:
         conn.close()
 
 
+def get_hana_object_types(data_source, tables: list[str]) -> dict[str, str]:
+    schema = get_hana_schema_name(data_source)
+    conn = get_hana_client(data_source)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT VIEW_NAME FROM SYS.VIEWS WHERE SCHEMA_NAME = ?", (schema,))
+        views = {row[0] for row in cursor.fetchall()}
+    finally:
+        conn.close()
+
+    return {table: ("View" if table in views else "Table") for table in tables}
+
+
 def get_hana_ibis_schema(data_source, table_name: str) -> ibis.Schema:
     schema = get_hana_schema_name(data_source)
     conn = get_hana_client(data_source)
