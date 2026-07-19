@@ -2,6 +2,7 @@
 import {
 	AreaChart,
 	BarChart3,
+	BarChart4,
 	BarChartHorizontal,
 	BatteryMedium,
 	Filter,
@@ -12,6 +13,7 @@ import {
 	ScatterChart,
 	Share2,
 	Table2,
+	TrendingUp,
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { ChartType } from '../../types/chart.types'
@@ -41,6 +43,10 @@ const icon = computed(() => {
 			return Map
 		case 'Sankey':
 			return Share2
+		case 'Waterfall':
+			return BarChart4
+		case 'Pareto':
+			return TrendingUp
 		default:
 			return BarChart3
 	}

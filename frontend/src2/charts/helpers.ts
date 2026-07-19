@@ -318,6 +318,184 @@ export function getBarChartOptions(config: BarChartConfig, result: QueryResult, 
 	}
 }
 
+export function getWaterfallChartOptions(config: AxisChartConfig, result: QueryResult) {
+	const number_columns = result.columns.filter((c) => FIELDTYPES.NUMBER.includes(c.type))
+	if (!number_columns.length || !config.x_axis?.dimension?.dimension_name) return {}
+
+	const measure_column = number_columns[0].name
+	const dimension_name = config.x_axis.dimension.dimension_name
+
+	// dates run chronologically; anything else keeps the query's order
+	const xAxisIsDate = isCalendarDateType(config.x_axis.dimension.data_type)
+	const rowOrder = getAxisChartRowOrder(result.rows, config.x_axis)
+	const sortedRows = xAxisIsDate ? rowOrder.map((i) => result.rows[i]) : result.rows
+
+	const categories = sortedRows.map((r) => String(r[dimension_name]))
+	const deltas = sortedRows.map((r) => Number(r[measure_column]) || 0)
+
+	// waterfall = stacked bars: a transparent base + the visible delta
+	const bases: number[] = []
+	const bars: number[] = []
+	let running = 0
+	for (const delta of deltas) {
+		const next = running + delta
+		bases.push(Math.min(running, next))
+		bars.push(Math.abs(delta))
+		running = next
+	}
+	categories.push('Total')
+	bases.push(Math.min(0, running))
+	bars.push(Math.abs(running))
+
+	const deltaValues = [...deltas, running]
+	// green up, red down, blue closing total (COLOR_MAP palette values)
+	const itemColors = deltas.map((d) => (d >= 0 ? '#48BB74' : '#F56B6B'))
+	itemColors.push('#318AD8')
+
+	const show_data_labels = config.y_axis?.show_data_labels || false
+
+	return {
+		animation: true,
+		animationDuration: 700,
+		grid: getGrid({}),
+		xAxis: {
+			type: 'category',
+			data: categories,
+			axisLabel: { rotate: config.x_axis.label_rotation || 0, hideOverlap: true },
+		},
+		yAxis: getYAxis({ min: config.y_axis?.min, max: config.y_axis?.max }),
+		series: [
+			{
+				type: 'bar',
+				stack: 'waterfall',
+				data: bases,
+				itemStyle: { color: 'transparent' },
+				emphasis: { disabled: true },
+				silent: true,
+			},
+			{
+				type: 'bar',
+				stack: 'waterfall',
+				name: config.y_axis?.series?.[0]?.measure?.measure_name || measure_column,
+				data: bars.map((value, idx) => ({
+					value,
+					itemStyle: { color: itemColors[idx], borderRadius: [2, 2, 0, 0] },
+				})),
+				label: {
+					show: show_data_labels,
+					position: 'top',
+					fontSize: 11,
+					formatter: (params: any) => getShortNumber(deltaValues[params.dataIndex], 1),
+				},
+				labelLayout: { hideOverlap: true },
+			},
+		],
+		tooltip: {
+			trigger: 'axis',
+			confine: true,
+			appendToBody: false,
+			formatter: (params: any) => {
+				const p = Array.isArray(params) ? params[params.length - 1] : params
+				const idx = p.dataIndex
+				const isTotal = idx === categories.length - 1
+				const delta = deltaValues[idx]
+				const sign = !isTotal && delta >= 0 ? '+' : ''
+				return `${categories[idx]}: <b>${sign}${getShortNumber(delta, 2)}</b>`
+			},
+		},
+		legend: { show: false },
+	}
+}
+
+export function getParetoChartOptions(config: AxisChartConfig, result: QueryResult) {
+	const number_columns = result.columns.filter((c) => FIELDTYPES.NUMBER.includes(c.type))
+	if (!number_columns.length || !config.x_axis?.dimension?.dimension_name) return {}
+
+	const measure_column = number_columns[0].name
+	const dimension_name = config.x_axis.dimension.dimension_name
+	const measure_name = config.y_axis?.series?.[0]?.measure?.measure_name || measure_column
+
+	const sortedRows = [...result.rows].sort(
+		(a, b) => (Number(b[measure_column]) || 0) - (Number(a[measure_column]) || 0),
+	)
+	const categories = sortedRows.map((r) => String(r[dimension_name]))
+	const values = sortedRows.map((r) => Number(r[measure_column]) || 0)
+	const total = values.reduce((acc, v) => acc + v, 0)
+
+	let cumulative = 0
+	const cumulativeShare = values.map((v) => {
+		cumulative += v
+		return total ? Number(((cumulative / total) * 100).toFixed(1)) : 0
+	})
+
+	const colors = getColors()
+	const show_data_labels = config.y_axis?.show_data_labels || false
+
+	return {
+		animation: true,
+		animationDuration: 700,
+		color: colors,
+		grid: getGrid({ show_legend: true }),
+		xAxis: {
+			type: 'category',
+			data: categories,
+			axisLabel: { rotate: config.x_axis.label_rotation || 0, hideOverlap: true },
+		},
+		yAxis: [
+			getYAxis({ min: config.y_axis?.min, max: config.y_axis?.max }),
+			{ ...getYAxis(), max: 100, axisLabel: { formatter: '{value}%' } },
+		],
+		series: [
+			{
+				type: 'bar',
+				name: measure_name,
+				data: values,
+				itemStyle: { borderRadius: [2, 2, 0, 0] },
+				label: {
+					show: show_data_labels,
+					position: 'top',
+					fontSize: 11,
+					formatter: (params: any) => getShortNumber(params.value, 1),
+				},
+				labelLayout: { hideOverlap: true },
+			},
+			{
+				type: 'line',
+				name: 'Cumulative %',
+				yAxisIndex: 1,
+				data: cumulativeShare,
+				symbolSize: 6,
+				lineStyle: { width: 2 },
+				color: '#F8814F',
+				markLine: {
+					silent: true,
+					symbol: 'none',
+					label: { formatter: '80%' },
+					lineStyle: { type: 'dashed', color: '#A6B1B9' },
+					data: [{ yAxis: 80 }],
+				},
+			},
+		],
+		tooltip: {
+			trigger: 'axis',
+			confine: true,
+			appendToBody: false,
+			formatter: (params: any) => {
+				const list = Array.isArray(params) ? params : [params]
+				const idx = list[0].dataIndex
+				let html = String(categories[idx])
+				for (const p of list) {
+					const value =
+						p.seriesType === 'line' ? `${p.data}%` : getShortNumber(p.data, 2)
+					html += `<br/>${p.marker} ${p.seriesName}: <b>${value}</b>`
+				}
+				return html
+			},
+		},
+		legend: getLegend(true),
+	}
+}
+
 function getSerie(config: AxisChartConfig, number_column: string): Series {
 	let serie
 	if (!config.split_by?.dimension?.column_name) {

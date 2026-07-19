@@ -4,7 +4,18 @@ import { Dimension, Measure } from './query.types'
 export const AXIS_CHARTS = ['Bar', 'Line', 'Row']
 export type AxisChartType = (typeof AXIS_CHARTS)[number]
 
-export const CHARTS = ['Number', ...AXIS_CHARTS, 'Donut', 'Funnel', 'Table', 'Map', 'Bubble', 'Sankey']
+export const CHARTS = [
+	'Number',
+	...AXIS_CHARTS,
+	'Donut',
+	'Funnel',
+	'Table',
+	'Map',
+	'Bubble',
+	'Sankey',
+	'Waterfall',
+	'Pareto',
+]
 export type ChartType = (typeof CHARTS)[number]
 
 export type AxisChartConfig = {
@@ -73,6 +84,8 @@ export type LineChartConfig = AxisChartConfig & {
 export type MixedChartConfig = AxisChartConfig & {
 	y_axis: YAxisLine | YAxisBar
 }
+export type WaterfallChartConfig = AxisChartConfig
+export type ParetoChartConfig = AxisChartConfig
 
 export type NumberChartConfig = {
 	number_columns: Measure[]
@@ -164,6 +177,8 @@ export type ChartConfig =
 	| MapChartConfig
 	| BubbleChartConfig
 	| SankeyChartConfig
+	| WaterfallChartConfig
+	| ParetoChartConfig
 
 export interface Suggestion {
 		region: string

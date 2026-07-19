@@ -26,7 +26,9 @@ import {
 	getFunnelChartOptions,
 	getLineChartOptions,
 	getMapChartOptions,
+	getParetoChartOptions,
 	getSankeyChartOptions,
+	getWaterfallChartOptions,
 	getAxisChartRowOrder,
 } from '../helpers'
 import BaseChart from './BaseChart.vue'
@@ -70,6 +72,12 @@ const eChartOptions = computed(() => {
 	}
 	if (chart_type.value === 'Sankey') {
 		return getSankeyChartOptions(config.value as SankeyChartConfig, result.value)
+	}
+	if (chart_type.value === 'Waterfall') {
+		return getWaterfallChartOptions(config.value as AxisChartConfig, result.value)
+	}
+	if (chart_type.value === 'Pareto') {
+		return getParetoChartOptions(config.value as AxisChartConfig, result.value)
 	}
 })
 

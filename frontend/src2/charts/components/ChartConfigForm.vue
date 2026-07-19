@@ -9,8 +9,10 @@ import {
 	LineChartConfig,
 	MapChartConfig,
 	NumberChartConfig,
+	ParetoChartConfig,
 	SankeyChartConfig,
 	TableChartConfig,
+	WaterfallChartConfig,
 } from '../../types/chart.types'
 import { DimensionOption } from '../../types/query.types'
 import { Chart } from '../chart'
@@ -21,8 +23,10 @@ import LineChartConfigForm from './LineChartConfigForm.vue'
 import MapChartConfigForm from './MapChartConfigForm.vue'
 import NumberChartConfigForm from './NumberChartConfigForm.vue'
 import BubbleChartConfigForm from './BubbleChartConfigForm.vue'
+import ParetoChartConfigForm from './ParetoChartConfigForm.vue'
 import SankeyChartConfigForm from './SankeyChartConfigForm.vue'
 import TableChartConfigForm from './TableChartConfigForm.vue'
+import WaterfallChartConfigForm from './WaterfallChartConfigForm.vue'
 
 const props = defineProps<{ chart: Chart }>()
 
@@ -101,6 +105,18 @@ const queryResult = computed(() => chartQuery.value.result)
 	<SankeyChartConfigForm
 		v-if="props.chart.doc.chart_type == 'Sankey'"
 		v-model="(props.chart.doc.config as SankeyChartConfig)"
+		:dimensions="dimensions"
+		:column-options="columnOptions"
+	/>
+	<WaterfallChartConfigForm
+		v-if="props.chart.doc.chart_type == 'Waterfall'"
+		v-model="(props.chart.doc.config as WaterfallChartConfig)"
+		:dimensions="dimensions"
+		:column-options="columnOptions"
+	/>
+	<ParetoChartConfigForm
+		v-if="props.chart.doc.chart_type == 'Pareto'"
+		v-model="(props.chart.doc.config as ParetoChartConfig)"
 		:dimensions="dimensions"
 		:column-options="columnOptions"
 	/>
