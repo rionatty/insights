@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Badge, Button, Dialog, call } from 'frappe-ui'
+import { Badge, Button, Dialog, FormControl, call } from 'frappe-ui'
 import { CheckCircle2, LayoutTemplate } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import useDataSourceStore from '../data_source/data_source'
 import { createToast } from '../helpers/toasts'
 import { useTelemetry } from '../telemetry'
 import { __ } from '../translation'
@@ -15,8 +16,10 @@ export type WorkbookTemplate = {
 	module: string
 	app: string
 	app_title: string
+	system: string
+	requires_data_source: boolean
 	version: number
-	has_data: boolean
+	has_data: boolean | null
 	preview_image: string | null
 	imported_workbook: number | null
 	imported_version: number | null
@@ -28,19 +31,61 @@ const props = defineProps<{ templates: WorkbookTemplate[] }>()
 const emit = defineEmits<{ refresh: [] }>()
 const show = defineModel<boolean>({ default: false })
 
-// group by the app each template is for, so an app's dashboards read as one
-// attributed section rather than one undifferentiated grid
-const sections = computed(() => {
-	const byApp = new Map<string, WorkbookTemplate[]>()
-	for (const template of props.templates) {
-		const group = byApp.get(template.app_title) ?? []
-		group.push(template)
-		byApp.set(template.app_title, group)
-	}
-	return [...byApp.entries()]
-		.map(([app, items]) => ({ app, items }))
-		.sort((a, b) => a.app.localeCompare(b.app))
+// filter facet: the business system a template is built for (ERPNext, SAP
+// Business One, ...) — derived from the templates present, so new systems
+// appear in the switcher without UI changes
+const selectedSystem = ref('All')
+const systems = computed(() => {
+	const distinct = [...new Set(props.templates.map((t) => t.system))].sort()
+	return ['All', ...distinct]
 })
+
+// group by system so each system's dashboards read as one attributed section
+const sections = computed(() => {
+	const bySystem = new Map<string, WorkbookTemplate[]>()
+	for (const template of props.templates) {
+		if (selectedSystem.value !== 'All' && template.system !== selectedSystem.value) {
+			continue
+		}
+		const group = bySystem.get(template.system) ?? []
+		group.push(template)
+		bySystem.set(template.system, group)
+	}
+	return [...bySystem.entries()]
+		.map(([system, items]) => ({ system, items }))
+		.sort((a, b) => a.system.localeCompare(b.system))
+})
+
+// external-source templates (e.g. SAP B1) bind to a site data source at import
+const dataSourceStore = useDataSourceStore()
+const sourcePickTarget = ref<WorkbookTemplate | null>(null)
+const showSourcePicker = ref(false)
+const selectedDataSource = ref('')
+const sourceOptions = computed(() =>
+	dataSourceStore.sources
+		.filter((source) => !source.is_site_db)
+		.map((source) => ({
+			label: `${source.title} (${source.database_type})`,
+			value: source.name,
+		})),
+)
+
+function onImportClick(template: WorkbookTemplate) {
+	if (template.requires_data_source) {
+		sourcePickTarget.value = template
+		selectedDataSource.value = ''
+		showSourcePicker.value = true
+		return
+	}
+	importTemplate(template)
+}
+
+function confirmSourceImport() {
+	if (sourcePickTarget.value && selectedDataSource.value) {
+		showSourcePicker.value = false
+		importTemplate(sourcePickTarget.value, selectedDataSource.value)
+	}
+}
 
 const router = useRouter()
 const { capture } = useTelemetry()
@@ -48,10 +93,11 @@ const { capture } = useTelemetry()
 // name of the template currently being imported, so only its card spins
 const importing = ref<string | null>(null)
 
-function importTemplate(template: WorkbookTemplate) {
+function importTemplate(template: WorkbookTemplate, dataSource?: string) {
 	importing.value = template.name
 	call('insights.api.templates.create_workbook_from_template', {
 		template_name: template.name,
+		data_source: dataSource || undefined,
 	})
 		.then((result: { workbook: number; dashboard: string | null }) => {
 			capture('workbook_template_imported', {
@@ -126,14 +172,25 @@ function runUpdate(template: WorkbookTemplate) {
 					)
 				}}
 			</p>
+			<!-- system switcher: All / ERPNext / SAP Business One / ... -->
+			<div class="mb-4 flex items-center gap-2">
+				<Button
+					v-for="system in systems"
+					:key="system"
+					:variant="selectedSystem === system ? 'solid' : 'outline'"
+					@click="selectedSystem = system"
+				>
+					{{ system === 'All' ? __('All Systems') : system }}
+				</Button>
+			</div>
 			<!-- cap the height so the cards scroll inside the dialog rather than
 			growing the panel and scrolling the whole overlay -->
 			<div class="max-h-[60vh] overflow-y-auto">
-				<!-- one section per app, headed by the app's title — a single app
-				just reads as one section -->
-				<div v-for="section in sections" :key="section.app" class="mb-6 last:mb-0">
+				<!-- one section per system, headed by the system's name — a single
+				system just reads as one section -->
+				<div v-for="section in sections" :key="section.system" class="mb-6 last:mb-0">
 					<div class="mb-2.5 text-p-sm font-medium text-ink-gray-5">
-						{{ section.app }}
+						{{ section.system }}
 					</div>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div
@@ -171,7 +228,7 @@ function runUpdate(template: WorkbookTemplate) {
 								</div>
 
 								<div
-									v-if="!template.has_data && !template.imported_workbook"
+									v-if="template.has_data === false && !template.imported_workbook"
 									class="mt-2 text-p-sm text-ink-amber-3"
 								>
 									{{
@@ -215,7 +272,7 @@ function runUpdate(template: WorkbookTemplate) {
 										class="ml-auto"
 										:loading="importing === template.name"
 										:disabled="!!importing"
-										@click="importTemplate(template)"
+										@click="onImportClick(template)"
 									>
 										{{ __('Import') }}
 									</Button>
@@ -224,6 +281,37 @@ function runUpdate(template: WorkbookTemplate) {
 						</div>
 					</div>
 				</div>
+			</div>
+		</template>
+	</Dialog>
+
+	<Dialog
+		v-model="showSourcePicker"
+		:options="{ title: __('Select a data source') }"
+	>
+		<template #body-content>
+			<p class="mb-4 text-p-base text-ink-gray-6">
+				{{
+					__(
+						'{0} runs against an external system. Choose the data source it should be connected to.',
+						[sourcePickTarget?.title],
+					)
+				}}
+			</p>
+			<FormControl
+				type="select"
+				v-model="selectedDataSource"
+				:label="__('Data Source')"
+				:options="[{ label: __('Select...'), value: '' }, ...sourceOptions]"
+			/>
+			<div class="mt-4 flex justify-end">
+				<Button
+					variant="solid"
+					:disabled="!selectedDataSource"
+					@click="confirmSourceImport()"
+				>
+					{{ __('Import') }}
+				</Button>
 			</div>
 		</template>
 	</Dialog>

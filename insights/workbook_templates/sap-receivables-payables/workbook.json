@@ -1,0 +1,547 @@
+{
+ "version": 1.0,
+ "type": "Workbook",
+ "name": "template-sap-receivables-payables",
+ "doc": {
+  "name": "template-sap-receivables-payables",
+  "title": "Receivables & Payables (SAP B1)"
+ },
+ "dependencies": {
+  "folders": [],
+  "queries": {
+   "tq-sb1-open-ar": {
+    "name": "tq-sb1-open-ar",
+    "title": "Open AR Invoices",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 0,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OINV"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       },
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DocStatus"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-open-ap": {
+    "name": "tq-sb1-open-ap",
+    "title": "Open AP Invoices",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 1,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OPCH"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       },
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DocStatus"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-customers": {
+    "name": "tq-sb1-customers",
+    "title": "Customers",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 2,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OCRD"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CardType"
+        },
+        "operator": "=",
+        "value": "C"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-suppliers": {
+    "name": "tq-sb1-suppliers",
+    "title": "Suppliers",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 3,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OCRD"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CardType"
+        },
+        "operator": "=",
+        "value": "S"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "charts": {
+   "tc-sb1-ar-kpis": {
+    "name": "tc-sb1-ar-kpis",
+    "title": "Receivables",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 0,
+    "query": "tq-sb1-open-ar",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Open AR Value",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Open Invoices",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-ap-kpis": {
+    "name": "tc-sb1-ap-kpis",
+    "title": "Payables",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-sb1-open-ap",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Open AP Value",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Open Bills",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-cust-balances": {
+    "name": "tc-sb1-cust-balances",
+    "title": "Top Customer Balances",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-customers",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardName",
+       "column_name": "CardName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Balance",
+         "column_name": "Balance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Balance"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 15,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-supp-balances": {
+    "name": "tc-sb1-supp-balances",
+    "title": "Top Supplier Balances",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-suppliers",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardName",
+       "column_name": "CardName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Balance",
+         "column_name": "Balance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Balance"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 15,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-ar-due": {
+    "name": "tc-sb1-ar-due",
+    "title": "AR by Due Date",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 4,
+    "query": "tq-sb1-open-ar",
+    "chart_type": "Table",
+    "config": {
+     "rows": [
+      {
+       "dimension_name": "Customer",
+       "column_name": "CardName",
+       "data_type": "String"
+      },
+      {
+       "dimension_name": "Due Date",
+       "column_name": "DocDueDate",
+       "data_type": "Date"
+      }
+     ],
+     "columns": [],
+     "values": [
+      {
+       "measure_name": "Amount",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Due Date"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 25,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-ap-due": {
+    "name": "tc-sb1-ap-due",
+    "title": "AP by Due Date",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 5,
+    "query": "tq-sb1-open-ap",
+    "chart_type": "Table",
+    "config": {
+     "rows": [
+      {
+       "dimension_name": "Supplier",
+       "column_name": "CardName",
+       "data_type": "String"
+      },
+      {
+       "dimension_name": "Due Date",
+       "column_name": "DocDueDate",
+       "data_type": "Date"
+      }
+     ],
+     "columns": [],
+     "values": [
+      {
+       "measure_name": "Amount",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Due Date"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 25,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   }
+  },
+  "dashboards": {
+   "td-sap-receivables-payables": {
+    "name": "td-sap-receivables-payables",
+    "title": "Receivables & Payables (SAP B1)",
+    "workbook": "template-sap-receivables-payables",
+    "items": [
+     {
+      "type": "filter",
+      "filter_name": "Customer",
+      "filter_type": "String",
+      "icon": "user",
+      "links": {
+       "tc-sb1-ar-kpis": "`tq-sb1-open-ar`.`CardName`",
+       "tc-sb1-ar-due": "`tq-sb1-open-ar`.`CardName`",
+       "tc-sb1-cust-balances": "`tq-sb1-customers`.`CardName`"
+      },
+      "layout": {
+       "i": "filter-customer",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 1
+      }
+     },
+     {
+      "type": "filter",
+      "filter_name": "Supplier",
+      "filter_type": "String",
+      "icon": "truck",
+      "links": {
+       "tc-sb1-ap-kpis": "`tq-sb1-open-ap`.`CardName`",
+       "tc-sb1-ap-due": "`tq-sb1-open-ap`.`CardName`",
+       "tc-sb1-supp-balances": "`tq-sb1-suppliers`.`CardName`"
+      },
+      "layout": {
+       "i": "filter-supplier",
+       "x": 4,
+       "y": 0,
+       "w": 4,
+       "h": 1
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ar-kpis",
+      "layout": {
+       "i": "item-tc-sb1-ar-kpis",
+       "x": 0,
+       "y": 1,
+       "w": 10,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ap-kpis",
+      "layout": {
+       "i": "item-tc-sb1-ap-kpis",
+       "x": 10,
+       "y": 1,
+       "w": 10,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-cust-balances",
+      "layout": {
+       "i": "item-tc-sb1-cust-balances",
+       "x": 0,
+       "y": 4,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-supp-balances",
+      "layout": {
+       "i": "item-tc-sb1-supp-balances",
+       "x": 10,
+       "y": 4,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ar-due",
+      "layout": {
+       "i": "item-tc-sb1-ar-due",
+       "x": 0,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ap-due",
+      "layout": {
+       "i": "item-tc-sb1-ap-due",
+       "x": 10,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     }
+    ]
+   }
+  }
+ }
+}

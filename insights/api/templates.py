@@ -36,6 +36,49 @@ def _app_title(app: str) -> str:
         return app
 
 
+def _template_system(entry: dict) -> str:
+    """The business system a template is built for (e.g. "SAP Business One",
+    "ERPNext") — the library's filter facet. Explicit in the manifest for
+    external-source templates; derived from required_apps otherwise."""
+    manifest = entry["manifest"]
+    if manifest.get("system"):
+        return manifest["system"]
+    if "erpnext" in (manifest.get("required_apps") or []):
+        return "ERPNext"
+    return _app_title(_grouping_app(entry))
+
+
+def _bind_data_source(node, placeholder: str, data_source: str) -> None:
+    """Replace every reference to the manifest's placeholder data source with
+    the site's chosen one, across the whole workbook definition."""
+    if isinstance(node, dict):
+        if node.get("data_source") == placeholder:
+            node["data_source"] = data_source
+        for value in node.values():
+            _bind_data_source(value, placeholder, data_source)
+    elif isinstance(node, list):
+        for value in node:
+            _bind_data_source(value, placeholder, data_source)
+
+
+def _find_bound_data_source(workbook_name: str, placeholder: str) -> str | None:
+    """The data source an imported copy was bound to at import time, read back
+    from its queries — so updates can re-bind the new version the same way."""
+    for row in frappe.get_all("Insights Query v3", {"workbook": workbook_name}, pluck="name"):
+        operations = frappe.parse_json(
+            frappe.db.get_value("Insights Query v3", row, "operations") or "[]"
+        )
+        for op in operations:
+            if not isinstance(op, dict) or op.get("type") != "source":
+                continue
+            table = op.get("table")
+            if isinstance(table, dict):
+                source = table.get("data_source")
+                if source and source != placeholder:
+                    return source
+    return None
+
+
 def _grouping_app(entry: dict) -> str:
     """The app a template belongs to, for library grouping. Its first required
     app when it declares one — an Insights-bundled ERPNext dashboard belongs
@@ -204,7 +247,12 @@ def get_workbook_templates() -> list[dict]:
                 "app_title": _app_title(group_app),
                 # absent = v1; the key that makes "update available" possible
                 "version": version,
-                "has_data": has_source_data(manifest),
+                # the business system the template targets — the library's filter
+                "system": _template_system(entry),
+                # external-source templates need a data source picked at import
+                "requires_data_source": bool(manifest.get("data_source_placeholder")),
+                # None (not False) when sources are external — data can't be checked
+                "has_data": has_source_data(manifest) if manifest.get("source_doctypes") else None,
                 "preview_image": get_template_preview(name),
                 # workbook the site already imported from the template, else None
                 "imported_workbook": imported_workbook,
@@ -277,7 +325,7 @@ def _template_import_result(workbook_name: str) -> dict:
 
 
 @insights_whitelist(role="Insights Admin")
-def create_workbook_from_template(template_name: str) -> dict:
+def create_workbook_from_template(template_name: str, data_source: str | None = None) -> dict:
     from insights.insights.doctype.insights_workbook.insights_workbook import import_workbook
 
     # resolve against the enumerated registry (never split+join the id onto a
@@ -291,6 +339,17 @@ def create_workbook_from_template(template_name: str) -> dict:
             )
         )
 
+    placeholder = manifest.get("data_source_placeholder")
+    if placeholder:
+        if not data_source:
+            frappe.throw(
+                _("Select a data source to import {0} against").format(
+                    frappe.bold(manifest.get("title") or template_name)
+                )
+            )
+        if not frappe.db.exists("Insights Data Source v3", data_source):
+            frappe.throw(_("Data source {0} does not exist").format(frappe.bold(data_source)))
+
     # One shared copy per site. Serialize the check-then-insert so two admins
     # clicking simultaneously on a fresh site can't both create a copy. The id's
     # "/" is flattened so it stays a plain lock filename, not a nested path.
@@ -303,7 +362,10 @@ def create_workbook_from_template(template_name: str) -> dict:
         # Import as the caller (don't frappe.set_user mid-request — it rewrites the
         # session sid and logs the user out), then hand the copy to Administrator so
         # it becomes a shared org resource that everyone else reads via the share.
-        workbook_name = import_workbook(get_template_workbook(template_name))
+        workbook_json = get_template_workbook(template_name)
+        if placeholder and data_source:
+            _bind_data_source(workbook_json, placeholder, data_source)
+        workbook_name = import_workbook(workbook_json)
         # tag the origin so the library can mark this template as imported
         frappe.db.set_value("Insights Workbook", workbook_name, "from_template", template_name)
         _reassign_to_administrator(workbook_name)
@@ -369,7 +431,14 @@ def _replace_workbook_contents(workbook_name: str, workbook_json: dict) -> None:
 
 def _update_imported_workbook(template_name: str, workbook_name: str) -> None:
     manifest = _resolve_template(template_name)["manifest"]
-    _replace_workbook_contents(workbook_name, get_template_workbook(template_name))
+    workbook_json = get_template_workbook(template_name)
+    placeholder = manifest.get("data_source_placeholder")
+    if placeholder:
+        # carry the data source the copy was originally bound to into the update
+        bound = _find_bound_data_source(workbook_name, placeholder)
+        if bound:
+            _bind_data_source(workbook_json, placeholder, bound)
+    _replace_workbook_contents(workbook_name, workbook_json)
     # rebuilt children default to the actor's ownership; hand them back to
     # Administrator so the shared-copy invariant from import still holds
     _reassign_to_administrator(workbook_name)

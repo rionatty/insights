@@ -1,0 +1,11 @@
+{
+ "version": 1,
+ "title": "Purchasing Overview",
+ "description": "Supplier spend and order pipeline \u2014 spend trend with month-on-month KPIs, top suppliers and items, and the open purchase order backlog.",
+ "notes": "Built from posted AP Invoices (OPCH/PCH1) and open Purchase Orders (OPOR), cancelled documents excluded.",
+ "module": "Buying",
+ "required_apps": [],
+ "source_doctypes": [],
+ "system": "SAP Business One",
+ "data_source_placeholder": "SAP B1"
+}

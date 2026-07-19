@@ -1,0 +1,11 @@
+{
+ "version": 1,
+ "title": "Receivables & Payables",
+ "description": "Who owes you and whom you owe \u2014 open AR and AP with due-date worklists and the largest customer and supplier balances.",
+ "notes": "Open documents come from unpaid AR Invoices (OINV) and AP Invoices (OPCH); balances come from the Business Partner master (OCRD). Amounts are document totals; partial payments are not deducted.",
+ "module": "Accounts",
+ "required_apps": [],
+ "source_doctypes": [],
+ "system": "SAP Business One",
+ "data_source_placeholder": "SAP B1"
+}

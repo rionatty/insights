@@ -1,0 +1,454 @@
+{
+ "version": 1.0,
+ "type": "Workbook",
+ "name": "template-sap-sales",
+ "doc": {
+  "name": "template-sap-sales",
+  "title": "Sales Performance (SAP B1)"
+ },
+ "dependencies": {
+  "folders": [],
+  "queries": {
+   "tq-sb1-inv": {
+    "name": "tq-sb1-inv",
+    "title": "AR Invoices",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 0,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OINV"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-inv-lines": {
+    "name": "tq-sb1-inv-lines",
+    "title": "AR Invoice Lines",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 1,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "INV1"
+      }
+     }
+    ]
+   }
+  },
+  "charts": {
+   "tc-sb1-sales-kpis": {
+    "name": "tc-sb1-sales-kpis",
+    "title": "Sales KPIs",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 0,
+    "query": "tq-sb1-inv",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Revenue",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Invoices",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      },
+      {
+       "measure_name": "Avg Invoice",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "avg"
+      },
+      {
+       "measure_name": "Customers",
+       "column_name": "CardCode",
+       "data_type": "Integer",
+       "aggregation": "count_distinct"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      },
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "DocDate",
+      "column_name": "DocDate",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-sb1-revenue-trend": {
+    "name": "tc-sb1-revenue-trend",
+    "title": "Revenue Trend",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-sb1-inv",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "DocDate",
+       "column_name": "DocDate",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Revenue",
+         "column_name": "DocTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-rev-by-whs": {
+    "name": "tc-sb1-rev-by-whs",
+    "title": "Revenue by Warehouse",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-inv-lines",
+    "chart_type": "Donut",
+    "config": {
+     "label_column": {
+      "dimension_name": "WhsCode",
+      "column_name": "WhsCode",
+      "data_type": "String"
+     },
+     "value_column": {
+      "measure_name": "Revenue",
+      "column_name": "LineTotal",
+      "data_type": "Decimal",
+      "aggregation": "sum"
+     },
+     "legend_position": "bottom",
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-customers": {
+    "name": "tc-sb1-top-customers",
+    "title": "Top 10 Customers",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-inv",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardName",
+       "column_name": "CardName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Revenue",
+         "column_name": "DocTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Revenue"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-items": {
+    "name": "tc-sb1-top-items",
+    "title": "Top 10 Items",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 4,
+    "query": "tq-sb1-inv-lines",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "Dscription",
+       "column_name": "Dscription",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Revenue",
+         "column_name": "LineTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Revenue"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-gp-trend": {
+    "name": "tc-sb1-gp-trend",
+    "title": "Gross Profit Trend",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 5,
+    "query": "tq-sb1-inv-lines",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "DocDate",
+       "column_name": "DocDate",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Gross Profit",
+         "column_name": "GrssProfit",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   }
+  },
+  "dashboards": {
+   "td-sap-sales": {
+    "name": "td-sap-sales",
+    "title": "Sales Performance (SAP B1)",
+    "workbook": "template-sap-sales",
+    "items": [
+     {
+      "type": "filter",
+      "filter_name": "Date Range",
+      "filter_type": "Date",
+      "icon": "calendar",
+      "default_operator": "within",
+      "default_value": "Last 12 months",
+      "links": {
+       "tc-sb1-sales-kpis": "`tq-sb1-inv`.`DocDate`",
+       "tc-sb1-revenue-trend": "`tq-sb1-inv`.`DocDate`",
+       "tc-sb1-top-customers": "`tq-sb1-inv`.`DocDate`",
+       "tc-sb1-rev-by-whs": "`tq-sb1-inv-lines`.`DocDate`",
+       "tc-sb1-top-items": "`tq-sb1-inv-lines`.`DocDate`",
+       "tc-sb1-gp-trend": "`tq-sb1-inv-lines`.`DocDate`"
+      },
+      "layout": {
+       "i": "filter-date",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 1
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-sales-kpis",
+      "layout": {
+       "i": "item-tc-sb1-sales-kpis",
+       "x": 0,
+       "y": 1,
+       "w": 20,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-revenue-trend",
+      "layout": {
+       "i": "item-tc-sb1-revenue-trend",
+       "x": 0,
+       "y": 4,
+       "w": 12,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-rev-by-whs",
+      "layout": {
+       "i": "item-tc-sb1-rev-by-whs",
+       "x": 12,
+       "y": 4,
+       "w": 8,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-customers",
+      "layout": {
+       "i": "item-tc-sb1-top-customers",
+       "x": 0,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-items",
+      "layout": {
+       "i": "item-tc-sb1-top-items",
+       "x": 10,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-gp-trend",
+      "layout": {
+       "i": "item-tc-sb1-gp-trend",
+       "x": 0,
+       "y": 20,
+       "w": 20,
+       "h": 8
+      }
+     }
+    ]
+   }
+  }
+ }
+}

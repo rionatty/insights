@@ -1,0 +1,469 @@
+{
+ "version": 1.0,
+ "type": "Workbook",
+ "name": "template-sap-inventory",
+ "doc": {
+  "name": "template-sap-inventory",
+  "title": "Inventory Health (SAP B1)"
+ },
+ "dependencies": {
+  "folders": [],
+  "queries": {
+   "tq-sb1-items": {
+    "name": "tq-sb1-items",
+    "title": "Items",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 0,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OITM"
+      }
+     }
+    ]
+   },
+   "tq-sb1-whs-stock": {
+    "name": "tq-sb1-whs-stock",
+    "title": "Warehouse Stock",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 1,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OITW"
+      }
+     }
+    ]
+   },
+   "tq-sb1-moves": {
+    "name": "tq-sb1-moves",
+    "title": "Stock Movements",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 2,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OINM"
+      }
+     }
+    ]
+   },
+   "tq-sb1-oos": {
+    "name": "tq-sb1-oos",
+    "title": "Out of Stock Items",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 3,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OITM"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "OnHand"
+        },
+        "operator": "<=",
+        "value": 0
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "charts": {
+   "tc-sb1-stock-kpis": {
+    "name": "tc-sb1-stock-kpis",
+    "title": "Stock KPIs",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 0,
+    "query": "tq-sb1-items",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Items",
+       "column_name": "ItemCode",
+       "data_type": "Integer",
+       "aggregation": "count"
+      },
+      {
+       "measure_name": "Total On-hand Qty",
+       "column_name": "OnHand",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "shorten_numbers": false
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-oos-kpi": {
+    "name": "tc-sb1-oos-kpi",
+    "title": "Out of Stock",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-sb1-oos",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Items at Zero or Below",
+       "column_name": "ItemCode",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-stock-by-whs": {
+    "name": "tc-sb1-stock-by-whs",
+    "title": "On-hand by Warehouse",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-whs-stock",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "WhsCode",
+       "column_name": "WhsCode",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "On-hand Qty",
+         "column_name": "OnHand",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "On-hand Qty"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-move-trend": {
+    "name": "tc-sb1-move-trend",
+    "title": "Movement Trend (In vs Out)",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-moves",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "DocDate",
+       "column_name": "DocDate",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Qty In",
+         "column_name": "InQty",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       },
+       {
+        "measure": {
+         "measure_name": "Qty Out",
+         "column_name": "OutQty",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-value-moved": {
+    "name": "tc-sb1-value-moved",
+    "title": "Net Stock Value Change",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 4,
+    "query": "tq-sb1-moves",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "DocDate",
+       "column_name": "DocDate",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Value Change",
+         "column_name": "TransValue",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-holdings": {
+    "name": "tc-sb1-top-holdings",
+    "title": "Largest Holdings (Qty)",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 5,
+    "query": "tq-sb1-items",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "ItemName",
+       "column_name": "ItemName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "On-hand Qty",
+         "column_name": "OnHand",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "On-hand Qty"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 15,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   }
+  },
+  "dashboards": {
+   "td-sap-inventory": {
+    "name": "td-sap-inventory",
+    "title": "Inventory Health (SAP B1)",
+    "workbook": "template-sap-inventory",
+    "items": [
+     {
+      "type": "filter",
+      "filter_name": "Date Range",
+      "filter_type": "Date",
+      "icon": "calendar",
+      "default_operator": "within",
+      "default_value": "Last 12 months",
+      "links": {
+       "tc-sb1-move-trend": "`tq-sb1-moves`.`DocDate`",
+       "tc-sb1-value-moved": "`tq-sb1-moves`.`DocDate`"
+      },
+      "layout": {
+       "i": "filter-date",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 1
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-stock-kpis",
+      "layout": {
+       "i": "item-tc-sb1-stock-kpis",
+       "x": 0,
+       "y": 1,
+       "w": 12,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-oos-kpi",
+      "layout": {
+       "i": "item-tc-sb1-oos-kpi",
+       "x": 12,
+       "y": 1,
+       "w": 8,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-move-trend",
+      "layout": {
+       "i": "item-tc-sb1-move-trend",
+       "x": 0,
+       "y": 4,
+       "w": 12,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-stock-by-whs",
+      "layout": {
+       "i": "item-tc-sb1-stock-by-whs",
+       "x": 12,
+       "y": 4,
+       "w": 8,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-holdings",
+      "layout": {
+       "i": "item-tc-sb1-top-holdings",
+       "x": 0,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-value-moved",
+      "layout": {
+       "i": "item-tc-sb1-value-moved",
+       "x": 10,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     }
+    ]
+   }
+  }
+ }
+}

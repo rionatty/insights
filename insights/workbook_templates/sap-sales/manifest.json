@@ -1,0 +1,11 @@
+{
+ "version": 1,
+ "title": "Sales Performance",
+ "description": "Revenue, customers and margins at a glance \u2014 revenue trend with month-on-month KPIs, gross profit, top customers and items, and revenue split by warehouse.",
+ "notes": "Built from posted AR Invoices (OINV/INV1), cancelled documents excluded. Gross profit uses SAP B1's per-line gross profit. Credit notes are not netted off.",
+ "module": "Selling",
+ "required_apps": [],
+ "source_doctypes": [],
+ "system": "SAP Business One",
+ "data_source_placeholder": "SAP B1"
+}

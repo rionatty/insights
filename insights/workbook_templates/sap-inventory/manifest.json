@@ -1,0 +1,11 @@
+{
+ "version": 1,
+ "title": "Inventory Health",
+ "description": "Stock levels, movement and gaps \u2014 on-hand by warehouse, in vs out movement trend, items out of stock and the biggest holdings.",
+ "notes": "Built from Item Master (OITM), Warehouse Stock (OITW) and the Inventory Journal (OINM). Quantities are in each item's stock UoM; mixed-UoM totals are indicative.",
+ "module": "Stock",
+ "required_apps": [],
+ "source_doctypes": [],
+ "system": "SAP Business One",
+ "data_source_placeholder": "SAP B1"
+}

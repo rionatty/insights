@@ -1,0 +1,11 @@
+{
+ "version": 1,
+ "title": "Tax & VAT Compliance",
+ "description": "Output vs input VAT month by month \u2014 taxable sales and purchases, credit note adjustments and the customers generating the most VAT. Built for URA/EFRIS reconciliation.",
+ "notes": "Built from document VAT totals on AR Invoices (OINV), AP Invoices (OPCH) and AR Credit Notes (ORIN), cancelled documents excluded. Reconcile against your tax authority filings before submission.",
+ "module": "Accounts",
+ "required_apps": [],
+ "source_doctypes": [],
+ "system": "SAP Business One",
+ "data_source_placeholder": "SAP B1"
+}

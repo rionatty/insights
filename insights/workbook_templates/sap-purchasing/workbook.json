@@ -1,0 +1,514 @@
+{
+ "version": 1.0,
+ "type": "Workbook",
+ "name": "template-sap-purchasing",
+ "doc": {
+  "name": "template-sap-purchasing",
+  "title": "Purchasing Overview (SAP B1)"
+ },
+ "dependencies": {
+  "folders": [],
+  "queries": {
+   "tq-sb1-bills": {
+    "name": "tq-sb1-bills",
+    "title": "AP Invoices",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 0,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OPCH"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-bill-lines": {
+    "name": "tq-sb1-bill-lines",
+    "title": "AP Invoice Lines",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 1,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "PCH1"
+      }
+     }
+    ]
+   },
+   "tq-sb1-open-pos": {
+    "name": "tq-sb1-open-pos",
+    "title": "Open Purchase Orders",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 2,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OPOR"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       },
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DocStatus"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "charts": {
+   "tc-sb1-purchase-kpis": {
+    "name": "tc-sb1-purchase-kpis",
+    "title": "Purchasing KPIs",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 0,
+    "query": "tq-sb1-bills",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Spend",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Bills",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      },
+      {
+       "measure_name": "Avg Bill",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "avg"
+      },
+      {
+       "measure_name": "Suppliers",
+       "column_name": "CardCode",
+       "data_type": "Integer",
+       "aggregation": "count_distinct"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      },
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "DocDate",
+      "column_name": "DocDate",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-sb1-open-po-kpis": {
+    "name": "tc-sb1-open-po-kpis",
+    "title": "Open Purchase Orders",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-sb1-open-pos",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Open PO Value",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Open POs",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-spend-trend": {
+    "name": "tc-sb1-spend-trend",
+    "title": "Spend Trend",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-bills",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "DocDate",
+       "column_name": "DocDate",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Spend",
+         "column_name": "DocTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-suppliers": {
+    "name": "tc-sb1-top-suppliers",
+    "title": "Top 10 Suppliers",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-bills",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardName",
+       "column_name": "CardName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Spend",
+         "column_name": "DocTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Spend"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-spend-by-item": {
+    "name": "tc-sb1-spend-by-item",
+    "title": "Top Purchased Items",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 4,
+    "query": "tq-sb1-bill-lines",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "Dscription",
+       "column_name": "Dscription",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Spend",
+         "column_name": "LineTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Spend"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-open-po-list": {
+    "name": "tc-sb1-open-po-list",
+    "title": "Open PO Backlog",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 5,
+    "query": "tq-sb1-open-pos",
+    "chart_type": "Table",
+    "config": {
+     "rows": [
+      {
+       "dimension_name": "Supplier",
+       "column_name": "CardName",
+       "data_type": "String"
+      },
+      {
+       "dimension_name": "Order Date",
+       "column_name": "DocDate",
+       "data_type": "Date"
+      }
+     ],
+     "columns": [],
+     "values": [
+      {
+       "measure_name": "Value",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Orders",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Value"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 20,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   }
+  },
+  "dashboards": {
+   "td-sap-purchasing": {
+    "name": "td-sap-purchasing",
+    "title": "Purchasing Overview (SAP B1)",
+    "workbook": "template-sap-purchasing",
+    "items": [
+     {
+      "type": "filter",
+      "filter_name": "Date Range",
+      "filter_type": "Date",
+      "icon": "calendar",
+      "default_operator": "within",
+      "default_value": "Last 12 months",
+      "links": {
+       "tc-sb1-purchase-kpis": "`tq-sb1-bills`.`DocDate`",
+       "tc-sb1-spend-trend": "`tq-sb1-bills`.`DocDate`",
+       "tc-sb1-top-suppliers": "`tq-sb1-bills`.`DocDate`",
+       "tc-sb1-spend-by-item": "`tq-sb1-bill-lines`.`DocDate`"
+      },
+      "layout": {
+       "i": "filter-date",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 1
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-purchase-kpis",
+      "layout": {
+       "i": "item-tc-sb1-purchase-kpis",
+       "x": 0,
+       "y": 1,
+       "w": 20,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-spend-trend",
+      "layout": {
+       "i": "item-tc-sb1-spend-trend",
+       "x": 0,
+       "y": 4,
+       "w": 12,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-open-po-kpis",
+      "layout": {
+       "i": "item-tc-sb1-open-po-kpis",
+       "x": 12,
+       "y": 4,
+       "w": 8,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-suppliers",
+      "layout": {
+       "i": "item-tc-sb1-top-suppliers",
+       "x": 0,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-spend-by-item",
+      "layout": {
+       "i": "item-tc-sb1-spend-by-item",
+       "x": 10,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-open-po-list",
+      "layout": {
+       "i": "item-tc-sb1-open-po-list",
+       "x": 0,
+       "y": 20,
+       "w": 20,
+       "h": 8
+      }
+     }
+    ]
+   }
+  }
+ }
+}
