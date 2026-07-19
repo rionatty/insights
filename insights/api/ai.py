@@ -142,7 +142,7 @@ def _table_priority(t) -> tuple:
     return (rank, name)
 
 
-def build_schema_context(data_source: str, max_tables: int = 15) -> str:
+def build_schema_context(data_source: str, max_tables: int = 15, max_columns: int = 40) -> str:
     """Compact schema description for the prompt, prioritized so the curated
     semantic layer wins the table budget; cached because reading remote
     schemas is slow. Stored procedures are excluded (not directly queryable)."""
@@ -164,18 +164,26 @@ def build_schema_context(data_source: str, max_tables: int = 15) -> str:
             for t in tables:
                 try:
                     schema = ds.get_ibis_table(t.table).schema()
-                    columns = ", ".join(f"{name} {dtype}" for name, dtype in schema.items())
+                    items = list(schema.items())
+                    # cap the column list: B1 base tables have hundreds of
+                    # columns, which balloons the prompt and makes CPU
+                    # inference painfully slow
+                    columns = ", ".join(f"{name} {dtype}" for name, dtype in items[:max_columns])
+                    if len(items) > max_columns:
+                        columns += f", ... plus {len(items) - max_columns} more columns"
                     lines.append(f"- {t.table}({columns})")
                 except Exception:
                     continue
         return "\n".join(lines)
 
-    cache_key = f"insights_ai_schema_v2:{data_source}"
+    cache_key = f"insights_ai_schema_v3:{data_source}"
     cached = frappe.cache.get_value(cache_key)
     if cached:
         return cached
     context = _build()
-    frappe.cache.set_value(cache_key, context, expires_in_sec=600)
+    # schemas rarely change; a long TTL keeps repeat asks fast. Update Tables
+    # or bench clear-cache refreshes it when the catalog changes.
+    frappe.cache.set_value(cache_key, context, expires_in_sec=6 * 60 * 60)
     return context
 
 
