@@ -164,6 +164,118 @@
       ]
      }
     ]
+   },
+   "tq-sb1-ar-aging": {
+    "name": "tq-sb1-ar-aging",
+    "title": "AR Aging",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 4,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_AR_AGING"
+      }
+     }
+    ]
+   },
+   "tq-sb1-ar-overdue": {
+    "name": "tq-sb1-ar-overdue",
+    "title": "Overdue AR",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 5,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_AR_AGING"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DaysOverdue"
+        },
+        "operator": ">",
+        "value": 0
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-ap-aging": {
+    "name": "tq-sb1-ap-aging",
+    "title": "AP Aging",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 6,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_AP_AGING"
+      }
+     }
+    ]
+   },
+   "tq-sb1-ap-overdue": {
+    "name": "tq-sb1-ap-overdue",
+    "title": "Overdue AP",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 7,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_AP_AGING"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DaysOverdue"
+        },
+        "operator": ">",
+        "value": 0
+       }
+      ]
+     }
+    ]
    }
   },
   "charts": {
@@ -251,12 +363,316 @@
      }
     }
    },
+   "tc-sb1-ar-overdue-kpi": {
+    "name": "tc-sb1-ar-overdue-kpi",
+    "title": "Receivables Overdue",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-ar-overdue",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Overdue Balance",
+       "column_name": "OpenBalance",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Overdue Invoices",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-ap-overdue-kpi": {
+    "name": "tc-sb1-ap-overdue-kpi",
+    "title": "Payables Overdue",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-ap-overdue",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Overdue Balance",
+       "column_name": "OpenBalance",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Overdue Bills",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-ar-aging10": {
+    "name": "tc-sb1-ar-aging10",
+    "title": "AR Aging \u2014 Overdue (10-Day Buckets)",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 4,
+    "query": "tq-sb1-ar-overdue",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "AgeBucket10",
+       "column_name": "AgeBucket10",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Overdue Balance",
+         "column_name": "OpenBalance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "AgeBucket10"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-ap-aging10": {
+    "name": "tc-sb1-ap-aging10",
+    "title": "AP Aging \u2014 Overdue (10-Day Buckets)",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 5,
+    "query": "tq-sb1-ap-overdue",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "AgeBucket10",
+       "column_name": "AgeBucket10",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Overdue Balance",
+         "column_name": "OpenBalance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "AgeBucket10"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-ar-aging30": {
+    "name": "tc-sb1-ar-aging30",
+    "title": "AR Aging \u2014 All Open (30-Day Buckets)",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 6,
+    "query": "tq-sb1-ar-aging",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "AgeBucket30",
+       "column_name": "AgeBucket30",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Open Balance",
+         "column_name": "OpenBalance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "AgeBucket30"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-ar": {
+    "name": "tc-sb1-top-ar",
+    "title": "Top Customers by Receivables",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 7,
+    "query": "tq-sb1-ar-aging",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardName",
+       "column_name": "CardName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Open Balance",
+         "column_name": "OpenBalance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Open Balance"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-ap": {
+    "name": "tc-sb1-top-ap",
+    "title": "Top Suppliers by Payables",
+    "workbook": "template-sap-receivables-payables",
+    "folder": null,
+    "sort_order": 8,
+    "query": "tq-sb1-ap-aging",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardName",
+       "column_name": "CardName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Open Balance",
+         "column_name": "OpenBalance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Open Balance"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
    "tc-sb1-cust-balances": {
     "name": "tc-sb1-cust-balances",
     "title": "Top Customer Balances",
     "workbook": "template-sap-receivables-payables",
     "folder": null,
-    "sort_order": 2,
+    "sort_order": 9,
     "query": "tq-sb1-customers",
     "chart_type": "Row",
     "config": {
@@ -300,7 +716,7 @@
     "title": "Top Supplier Balances",
     "workbook": "template-sap-receivables-payables",
     "folder": null,
-    "sort_order": 3,
+    "sort_order": 10,
     "query": "tq-sb1-suppliers",
     "chart_type": "Row",
     "config": {
@@ -344,7 +760,7 @@
     "title": "AR by Due Date",
     "workbook": "template-sap-receivables-payables",
     "folder": null,
-    "sort_order": 4,
+    "sort_order": 11,
     "query": "tq-sb1-open-ar",
     "chart_type": "Table",
     "config": {
@@ -390,7 +806,7 @@
     "title": "AP by Due Date",
     "workbook": "template-sap-receivables-payables",
     "folder": null,
-    "sort_order": 5,
+    "sort_order": 12,
     "query": "tq-sb1-open-ap",
     "chart_type": "Table",
     "config": {
@@ -446,7 +862,9 @@
       "links": {
        "tc-sb1-ar-kpis": "`tq-sb1-open-ar`.`CardName`",
        "tc-sb1-ar-due": "`tq-sb1-open-ar`.`CardName`",
-       "tc-sb1-cust-balances": "`tq-sb1-customers`.`CardName`"
+       "tc-sb1-cust-balances": "`tq-sb1-customers`.`CardName`",
+       "tc-sb1-ar-overdue-kpi": "`tq-sb1-ar-overdue`.`CardName`",
+       "tc-sb1-top-ar": "`tq-sb1-ar-aging`.`CardName`"
       },
       "layout": {
        "i": "filter-customer",
@@ -464,7 +882,9 @@
       "links": {
        "tc-sb1-ap-kpis": "`tq-sb1-open-ap`.`CardName`",
        "tc-sb1-ap-due": "`tq-sb1-open-ap`.`CardName`",
-       "tc-sb1-supp-balances": "`tq-sb1-suppliers`.`CardName`"
+       "tc-sb1-supp-balances": "`tq-sb1-suppliers`.`CardName`",
+       "tc-sb1-ap-overdue-kpi": "`tq-sb1-ap-overdue`.`CardName`",
+       "tc-sb1-top-ap": "`tq-sb1-ap-aging`.`CardName`"
       },
       "layout": {
        "i": "filter-supplier",
@@ -481,7 +901,18 @@
        "i": "item-tc-sb1-ar-kpis",
        "x": 0,
        "y": 1,
-       "w": 10,
+       "w": 5,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ar-overdue-kpi",
+      "layout": {
+       "i": "item-tc-sb1-ar-overdue-kpi",
+       "x": 5,
+       "y": 1,
+       "w": 5,
        "h": 3
       }
      },
@@ -492,8 +923,63 @@
        "i": "item-tc-sb1-ap-kpis",
        "x": 10,
        "y": 1,
-       "w": 10,
+       "w": 5,
        "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ap-overdue-kpi",
+      "layout": {
+       "i": "item-tc-sb1-ap-overdue-kpi",
+       "x": 15,
+       "y": 1,
+       "w": 5,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ar-aging10",
+      "layout": {
+       "i": "item-tc-sb1-ar-aging10",
+       "x": 0,
+       "y": 4,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ap-aging10",
+      "layout": {
+       "i": "item-tc-sb1-ap-aging10",
+       "x": 10,
+       "y": 4,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-ar",
+      "layout": {
+       "i": "item-tc-sb1-top-ar",
+       "x": 0,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-ap",
+      "layout": {
+       "i": "item-tc-sb1-top-ap",
+       "x": 10,
+       "y": 12,
+       "w": 10,
+       "h": 8
       }
      },
      {
@@ -502,7 +988,7 @@
       "layout": {
        "i": "item-tc-sb1-cust-balances",
        "x": 0,
-       "y": 4,
+       "y": 20,
        "w": 10,
        "h": 8
       }
@@ -513,7 +999,7 @@
       "layout": {
        "i": "item-tc-sb1-supp-balances",
        "x": 10,
-       "y": 4,
+       "y": 20,
        "w": 10,
        "h": 8
       }
@@ -524,7 +1010,7 @@
       "layout": {
        "i": "item-tc-sb1-ar-due",
        "x": 0,
-       "y": 12,
+       "y": 28,
        "w": 10,
        "h": 8
       }
@@ -535,8 +1021,19 @@
       "layout": {
        "i": "item-tc-sb1-ap-due",
        "x": 10,
-       "y": 12,
+       "y": 28,
        "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-ar-aging30",
+      "layout": {
+       "i": "item-tc-sb1-ar-aging30",
+       "x": 0,
+       "y": 36,
+       "w": 20,
        "h": 8
       }
      }

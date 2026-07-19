@@ -1,0 +1,315 @@
+{
+ "version": 1.0,
+ "type": "Workbook",
+ "name": "template-sap-crm",
+ "doc": {
+  "name": "template-sap-crm",
+  "title": "Sales Opportunities (SAP B1)"
+ },
+ "dependencies": {
+  "folders": [],
+  "queries": {
+   "tq-sb1-opps": {
+    "name": "tq-sb1-opps",
+    "title": "All Opportunities",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 0,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OOPR"
+      }
+     }
+    ]
+   },
+   "tq-sb1-open-opps": {
+    "name": "tq-sb1-open-opps",
+    "title": "Open Opportunities",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 1,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OOPR"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "Status"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "charts": {
+   "tc-sb1-opp-kpis": {
+    "name": "tc-sb1-opp-kpis",
+    "title": "Pipeline",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 0,
+    "query": "tq-sb1-open-opps",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Potential Amount",
+       "column_name": "MaxSumLoc",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Weighted Amount",
+       "column_name": "WtSumLoc",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Open Opportunities",
+       "column_name": "OpprId",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-opp-trend": {
+    "name": "tc-sb1-opp-trend",
+    "title": "Opportunities Opened per Month",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-sb1-opps",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "OpenDate",
+       "column_name": "OpenDate",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Opportunities",
+         "column_name": "OpprId",
+         "data_type": "Integer",
+         "aggregation": "count"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "OpenDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-opp-status": {
+    "name": "tc-sb1-opp-status",
+    "title": "Won / Lost / Open",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-opps",
+    "chart_type": "Donut",
+    "config": {
+     "label_column": {
+      "dimension_name": "Status",
+      "column_name": "Status",
+      "data_type": "String"
+     },
+     "value_column": {
+      "measure_name": "Opportunities",
+      "column_name": "OpprId",
+      "data_type": "Integer",
+      "aggregation": "count"
+     },
+     "legend_position": "bottom",
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-opps": {
+    "name": "tc-sb1-top-opps",
+    "title": "Top Customers by Open Potential",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-open-opps",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardCode",
+       "column_name": "CardCode",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Potential Amount",
+         "column_name": "MaxSumLoc",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Potential Amount"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   }
+  },
+  "dashboards": {
+   "td-sap-crm": {
+    "name": "td-sap-crm",
+    "title": "Sales Opportunities (SAP B1)",
+    "workbook": "template-sap-crm",
+    "items": [
+     {
+      "type": "filter",
+      "filter_name": "Date Range",
+      "filter_type": "Date",
+      "icon": "calendar",
+      "default_operator": "within",
+      "default_value": "Last 12 months",
+      "links": {
+       "tc-sb1-opp-trend": "`tq-sb1-opps`.`OpenDate`",
+       "tc-sb1-opp-status": "`tq-sb1-opps`.`OpenDate`"
+      },
+      "layout": {
+       "i": "filter-date",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 1
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-opp-kpis",
+      "layout": {
+       "i": "item-tc-sb1-opp-kpis",
+       "x": 0,
+       "y": 1,
+       "w": 20,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-opp-trend",
+      "layout": {
+       "i": "item-tc-sb1-opp-trend",
+       "x": 0,
+       "y": 4,
+       "w": 12,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-opp-status",
+      "layout": {
+       "i": "item-tc-sb1-opp-status",
+       "x": 12,
+       "y": 4,
+       "w": 8,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-opps",
+      "layout": {
+       "i": "item-tc-sb1-top-opps",
+       "x": 0,
+       "y": 12,
+       "w": 20,
+       "h": 8
+      }
+     }
+    ]
+   }
+  }
+ }
+}

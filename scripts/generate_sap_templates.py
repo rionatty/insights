@@ -117,6 +117,17 @@ def bar_chart(cid, title, qid, label_col, m, limit=100, sort_order=0):
     return chart(cid, title, qid, "Bar", cfg, sort_order)
 
 
+def bucket_bar(cid, title, qid, bucket_col, m, sort_order=0):
+    """Bar chart ordered by its (zero-padded) bucket label, not by value —
+    for aging charts where age order matters."""
+    cfg = {
+        "x_axis": {"dimension": dim(bucket_col)},
+        "y_axis": {"series": [{"measure": m}]},
+        **base_config(order_by=[order(bucket_col)]),
+    }
+    return chart(cid, title, qid, "Bar", cfg, sort_order)
+
+
 def donut_chart(cid, title, qid, label_col, m, sort_order=0):
     cfg = {
         "label_column": dim(label_col),
@@ -229,9 +240,10 @@ write_template(
         "Revenue, customers and margins at a glance — revenue trend with "
         "month-on-month KPIs, gross profit, top customers and items, and "
         "revenue split by warehouse.",
-        "Built from posted AR Invoices (OINV/INV1), cancelled documents "
-        "excluded. Gross profit uses SAP B1's per-line gross profit. "
-        "Credit notes are not netted off.",
+        "Built from posted AR Invoices (OINV/INV1), AR Credit Notes (ORIN) "
+        "and open Sales Orders (ORDR), cancelled documents excluded. Gross "
+        "profit uses SAP B1's per-line gross profit. Credit notes are shown "
+        "separately, not netted off.",
         "Selling",
     ),
     "template-sap-sales",
@@ -239,6 +251,8 @@ write_template(
     queries=[
         query("tq-sb1-inv", "AR Invoices", "OINV", NOT_CANCELED, 0),
         query("tq-sb1-inv-lines", "AR Invoice Lines", "INV1", None, 1),
+        query("tq-sb1-cn", "AR Credit Notes", "ORIN", NOT_CANCELED, 2),
+        query("tq-sb1-open-so", "Open Sales Orders", "ORDR", OPEN_DOC, 3),
     ],
     charts=[
         number_chart(
@@ -252,20 +266,50 @@ write_template(
             [MONEY, PLAIN, MONEY, PLAIN],
             date_col="DocDate", sort_order=0,
         ),
+        number_chart(
+            "tc-sb1-gp-kpi", "Profitability", "tq-sb1-inv-lines",
+            [
+                measure("Gross Profit", "GrssProfit"),
+                measure("Line Revenue", "LineTotal"),
+            ],
+            [MONEY, MONEY],
+            date_col="DocDate", sort_order=1,
+        ),
+        number_chart(
+            "tc-sb1-returns-kpi", "Sales Returns", "tq-sb1-cn",
+            [
+                measure("Return Amount", "DocTotal"),
+                measure("Credit Notes", "DocEntry", "count", "Integer"),
+            ],
+            [MONEY, PLAIN],
+            date_col="DocDate", sort_order=2,
+        ),
+        number_chart(
+            "tc-sb1-open-so-kpi", "Sales Orders Not Delivered", "tq-sb1-open-so",
+            [
+                measure("Open Order Value", "DocTotal"),
+                measure("Open Orders", "DocEntry", "count", "Integer"),
+            ],
+            [MONEY, PLAIN],
+            sort_order=3,
+        ),
         line_chart("tc-sb1-revenue-trend", "Revenue Trend", "tq-sb1-inv",
-                   "DocDate", [measure("Revenue", "DocTotal")], 1),
+                   "DocDate", [measure("Revenue", "DocTotal")], 4),
         donut_chart("tc-sb1-rev-by-whs", "Revenue by Warehouse", "tq-sb1-inv-lines",
-                    "WhsCode", measure("Revenue", "LineTotal"), 2),
+                    "WhsCode", measure("Revenue", "LineTotal"), 5),
         row_chart("tc-sb1-top-customers", "Top 10 Customers", "tq-sb1-inv",
-                  "CardName", measure("Revenue", "DocTotal"), 10, 3),
+                  "CardName", measure("Revenue", "DocTotal"), 10, 6),
         row_chart("tc-sb1-top-items", "Top 10 Items", "tq-sb1-inv-lines",
-                  "Dscription", measure("Revenue", "LineTotal"), 10, 4),
-        line_chart("tc-sb1-gp-trend", "Gross Profit Trend", "tq-sb1-inv-lines",
-                   "DocDate", [measure("Gross Profit", "GrssProfit")], 5),
+                  "Dscription", measure("Revenue", "LineTotal"), 10, 7),
+        line_chart("tc-sb1-gp-trend", "Revenue vs Gross Profit", "tq-sb1-inv-lines",
+                   "DocDate",
+                   [measure("Revenue", "LineTotal"), measure("Gross Profit", "GrssProfit")], 8),
     ],
     dashboard_items=[
         date_filter({
             "tc-sb1-sales-kpis": "`tq-sb1-inv`.`DocDate`",
+            "tc-sb1-gp-kpi": "`tq-sb1-inv-lines`.`DocDate`",
+            "tc-sb1-returns-kpi": "`tq-sb1-cn`.`DocDate`",
             "tc-sb1-revenue-trend": "`tq-sb1-inv`.`DocDate`",
             "tc-sb1-top-customers": "`tq-sb1-inv`.`DocDate`",
             "tc-sb1-rev-by-whs": "`tq-sb1-inv-lines`.`DocDate`",
@@ -273,11 +317,14 @@ write_template(
             "tc-sb1-gp-trend": "`tq-sb1-inv-lines`.`DocDate`",
         }),
         chart_item("tc-sb1-sales-kpis", 0, 1, 20, 3),
-        chart_item("tc-sb1-revenue-trend", 0, 4, 12, 8),
-        chart_item("tc-sb1-rev-by-whs", 12, 4, 8, 8),
-        chart_item("tc-sb1-top-customers", 0, 12, 10, 8),
-        chart_item("tc-sb1-top-items", 10, 12, 10, 8),
-        chart_item("tc-sb1-gp-trend", 0, 20, 20, 8),
+        chart_item("tc-sb1-gp-kpi", 0, 4, 8, 3),
+        chart_item("tc-sb1-returns-kpi", 8, 4, 6, 3),
+        chart_item("tc-sb1-open-so-kpi", 14, 4, 6, 3),
+        chart_item("tc-sb1-revenue-trend", 0, 7, 12, 8),
+        chart_item("tc-sb1-rev-by-whs", 12, 7, 8, 8),
+        chart_item("tc-sb1-top-customers", 0, 15, 10, 8),
+        chart_item("tc-sb1-top-items", 10, 15, 10, 8),
+        chart_item("tc-sb1-gp-trend", 0, 23, 20, 8),
     ],
 )
 
@@ -288,8 +335,9 @@ write_template(
         "Purchasing Overview",
         "Supplier spend and order pipeline — spend trend with month-on-month "
         "KPIs, top suppliers and items, and the open purchase order backlog.",
-        "Built from posted AP Invoices (OPCH/PCH1) and open Purchase Orders "
-        "(OPOR), cancelled documents excluded.",
+        "Built from posted AP Invoices (OPCH/PCH1), open Purchase Orders "
+        "(OPOR), open Goods Receipt POs (OPDN) and Goods Returns (ORPD), "
+        "cancelled documents excluded.",
         "Buying",
     ),
     "template-sap-purchasing",
@@ -298,6 +346,8 @@ write_template(
         query("tq-sb1-bills", "AP Invoices", "OPCH", NOT_CANCELED, 0),
         query("tq-sb1-bill-lines", "AP Invoice Lines", "PCH1", None, 1),
         query("tq-sb1-open-pos", "Open Purchase Orders", "OPOR", OPEN_DOC, 2),
+        query("tq-sb1-grpo", "Open Goods Receipt POs", "OPDN", OPEN_DOC, 3),
+        query("tq-sb1-preturns", "Goods Returns", "ORPD", NOT_CANCELED, 4),
     ],
     charts=[
         number_chart(
@@ -320,32 +370,57 @@ write_template(
             [MONEY, PLAIN],
             sort_order=1,
         ),
+        number_chart(
+            "tc-sb1-grpo-kpi", "GRPO Not Invoiced", "tq-sb1-grpo",
+            [
+                measure("Value", "DocTotal"),
+                measure("Receipts", "DocEntry", "count", "Integer"),
+            ],
+            [MONEY, PLAIN],
+            sort_order=2,
+        ),
+        number_chart(
+            "tc-sb1-preturn-kpi", "Goods Returns", "tq-sb1-preturns",
+            [
+                measure("Return Value", "DocTotal"),
+                measure("Returns", "DocEntry", "count", "Integer"),
+            ],
+            [MONEY, PLAIN],
+            date_col="DocDate", sort_order=3,
+        ),
         line_chart("tc-sb1-spend-trend", "Spend Trend", "tq-sb1-bills",
-                   "DocDate", [measure("Spend", "DocTotal")], 2),
+                   "DocDate", [measure("Spend", "DocTotal")], 4),
+        line_chart("tc-sb1-preturn-trend", "Goods Return Trend", "tq-sb1-preturns",
+                   "DocDate", [measure("Return Value", "DocTotal")], 5),
         row_chart("tc-sb1-top-suppliers", "Top 10 Suppliers", "tq-sb1-bills",
-                  "CardName", measure("Spend", "DocTotal"), 10, 3),
+                  "CardName", measure("Spend", "DocTotal"), 10, 6),
         row_chart("tc-sb1-spend-by-item", "Top Purchased Items", "tq-sb1-bill-lines",
-                  "Dscription", measure("Spend", "LineTotal"), 10, 4),
+                  "Dscription", measure("Spend", "LineTotal"), 10, 7),
         table_chart(
             "tc-sb1-open-po-list", "Open PO Backlog", "tq-sb1-open-pos",
             rows=[dim("CardName", name="Supplier"), dim("DocDate", "Date", name="Order Date")],
             values=[measure("Value", "DocTotal"), measure("Orders", "DocEntry", "count", "Integer")],
-            order_by=[order("Value", "desc")], limit=20, sort_order=5,
+            order_by=[order("Value", "desc")], limit=20, sort_order=8,
         ),
     ],
     dashboard_items=[
         date_filter({
             "tc-sb1-purchase-kpis": "`tq-sb1-bills`.`DocDate`",
+            "tc-sb1-preturn-kpi": "`tq-sb1-preturns`.`DocDate`",
             "tc-sb1-spend-trend": "`tq-sb1-bills`.`DocDate`",
+            "tc-sb1-preturn-trend": "`tq-sb1-preturns`.`DocDate`",
             "tc-sb1-top-suppliers": "`tq-sb1-bills`.`DocDate`",
             "tc-sb1-spend-by-item": "`tq-sb1-bill-lines`.`DocDate`",
         }),
         chart_item("tc-sb1-purchase-kpis", 0, 1, 20, 3),
-        chart_item("tc-sb1-spend-trend", 0, 4, 12, 8),
-        chart_item("tc-sb1-open-po-kpis", 12, 4, 8, 8),
-        chart_item("tc-sb1-top-suppliers", 0, 12, 10, 8),
-        chart_item("tc-sb1-spend-by-item", 10, 12, 10, 8),
-        chart_item("tc-sb1-open-po-list", 0, 20, 20, 8),
+        chart_item("tc-sb1-open-po-kpis", 0, 4, 7, 3),
+        chart_item("tc-sb1-grpo-kpi", 7, 4, 7, 3),
+        chart_item("tc-sb1-preturn-kpi", 14, 4, 6, 3),
+        chart_item("tc-sb1-spend-trend", 0, 7, 12, 8),
+        chart_item("tc-sb1-preturn-trend", 12, 7, 8, 8),
+        chart_item("tc-sb1-top-suppliers", 0, 15, 10, 8),
+        chart_item("tc-sb1-spend-by-item", 10, 15, 10, 8),
+        chart_item("tc-sb1-open-po-list", 0, 23, 20, 8),
     ],
 )
 
@@ -356,9 +431,12 @@ write_template(
         "Inventory Health",
         "Stock levels, movement and gaps — on-hand by warehouse, in vs out "
         "movement trend, items out of stock and the biggest holdings.",
-        "Built from Item Master (OITM), Warehouse Stock (OITW) and the "
-        "Inventory Journal (OINM). Quantities are in each item's stock UoM; "
-        "mixed-UoM totals are indicative.",
+        "Built from Item Master (OITM), Warehouse Stock (OITW), the "
+        "Inventory Journal (OINM) and open Inventory Transfer Requests "
+        "(OWTQ). Quantities are in each item's stock UoM; mixed-UoM totals "
+        "are indicative. Stock value is the cumulative inventory journal "
+        "value (cost), so it reflects all history regardless of the date "
+        "filter.",
         "Stock",
     ),
     "template-sap-inventory",
@@ -368,6 +446,7 @@ write_template(
         query("tq-sb1-whs-stock", "Warehouse Stock", "OITW", None, 1),
         query("tq-sb1-moves", "Stock Movements", "OINM", None, 2),
         query("tq-sb1-oos", "Out of Stock Items", "OITM", [flt("OnHand", "<=", 0)], 3),
+        query("tq-sb1-txfr-req", "Open Transfer Requests", "OWTQ", OPEN_DOC, 4),
     ],
     charts=[
         number_chart(
@@ -394,18 +473,36 @@ write_template(
                    "DocDate", [measure("Value Change", "TransValue")], 4),
         row_chart("tc-sb1-top-holdings", "Largest Holdings (Qty)", "tq-sb1-items",
                   "ItemName", measure("On-hand Qty", "OnHand"), 15, 5),
+        number_chart(
+            "tc-sb1-stockvalue-kpi", "Stock Value (at cost)", "tq-sb1-moves",
+            [measure("Stock Value", "TransValue")],
+            [MONEY],
+            sort_order=6,
+        ),
+        number_chart(
+            "tc-sb1-txfr-kpi", "Open Transfer Requests", "tq-sb1-txfr-req",
+            [measure("Requests", "DocEntry", "count", "Integer")],
+            [PLAIN],
+            sort_order=7,
+        ),
+        bar_chart("tc-sb1-out-by-whs", "Outbound Qty by Warehouse", "tq-sb1-moves",
+                  "Warehouse", measure("Qty Out", "OutQty"), 100, 8),
     ],
     dashboard_items=[
         date_filter({
             "tc-sb1-move-trend": "`tq-sb1-moves`.`DocDate`",
             "tc-sb1-value-moved": "`tq-sb1-moves`.`DocDate`",
+            "tc-sb1-out-by-whs": "`tq-sb1-moves`.`DocDate`",
         }),
-        chart_item("tc-sb1-stock-kpis", 0, 1, 12, 3),
-        chart_item("tc-sb1-oos-kpi", 12, 1, 8, 3),
+        chart_item("tc-sb1-stock-kpis", 0, 1, 8, 3),
+        chart_item("tc-sb1-stockvalue-kpi", 8, 1, 5, 3),
+        chart_item("tc-sb1-oos-kpi", 13, 1, 4, 3),
+        chart_item("tc-sb1-txfr-kpi", 17, 1, 3, 3),
         chart_item("tc-sb1-move-trend", 0, 4, 12, 8),
         chart_item("tc-sb1-stock-by-whs", 12, 4, 8, 8),
         chart_item("tc-sb1-top-holdings", 0, 12, 10, 8),
         chart_item("tc-sb1-value-moved", 10, 12, 10, 8),
+        chart_item("tc-sb1-out-by-whs", 0, 20, 20, 8),
     ],
 )
 
@@ -416,9 +513,11 @@ write_template(
         "Receivables & Payables",
         "Who owes you and whom you owe — open AR and AP with due-date "
         "worklists and the largest customer and supplier balances.",
-        "Open documents come from unpaid AR Invoices (OINV) and AP Invoices "
-        "(OPCH); balances come from the Business Partner master (OCRD). "
-        "Amounts are document totals; partial payments are not deducted.",
+        "Overdue and aging charts require the CVT_AR_AGING / CVT_AP_AGING "
+        "views (run scripts/sap_b1_finance_views.sql from the Insights repo "
+        "against the company database first) — these deduct partial "
+        "payments. Balances come from the Business Partner master (OCRD); "
+        "the due-date worklists use document totals.",
         "Accounts",
     ),
     "template-sap-receivables-payables",
@@ -428,6 +527,12 @@ write_template(
         query("tq-sb1-open-ap", "Open AP Invoices", "OPCH", OPEN_DOC, 1),
         query("tq-sb1-customers", "Customers", "OCRD", [flt("CardType", "=", "C")], 2),
         query("tq-sb1-suppliers", "Suppliers", "OCRD", [flt("CardType", "=", "S")], 3),
+        query("tq-sb1-ar-aging", "AR Aging", "CVT_AR_AGING", None, 4),
+        query("tq-sb1-ar-overdue", "Overdue AR", "CVT_AR_AGING",
+              [flt("DaysOverdue", ">", 0)], 5),
+        query("tq-sb1-ap-aging", "AP Aging", "CVT_AP_AGING", None, 6),
+        query("tq-sb1-ap-overdue", "Overdue AP", "CVT_AP_AGING",
+              [flt("DaysOverdue", ">", 0)], 7),
     ],
     charts=[
         number_chart(
@@ -448,21 +553,52 @@ write_template(
             [MONEY, PLAIN],
             sort_order=1,
         ),
+        number_chart(
+            "tc-sb1-ar-overdue-kpi", "Receivables Overdue", "tq-sb1-ar-overdue",
+            [
+                measure("Overdue Balance", "OpenBalance"),
+                measure("Overdue Invoices", "DocEntry", "count", "Integer"),
+            ],
+            [MONEY, PLAIN],
+            sort_order=2,
+        ),
+        number_chart(
+            "tc-sb1-ap-overdue-kpi", "Payables Overdue", "tq-sb1-ap-overdue",
+            [
+                measure("Overdue Balance", "OpenBalance"),
+                measure("Overdue Bills", "DocEntry", "count", "Integer"),
+            ],
+            [MONEY, PLAIN],
+            sort_order=3,
+        ),
+        bucket_bar("tc-sb1-ar-aging10", "AR Aging — Overdue (10-Day Buckets)",
+                   "tq-sb1-ar-overdue", "AgeBucket10",
+                   measure("Overdue Balance", "OpenBalance"), 4),
+        bucket_bar("tc-sb1-ap-aging10", "AP Aging — Overdue (10-Day Buckets)",
+                   "tq-sb1-ap-overdue", "AgeBucket10",
+                   measure("Overdue Balance", "OpenBalance"), 5),
+        bucket_bar("tc-sb1-ar-aging30", "AR Aging — All Open (30-Day Buckets)",
+                   "tq-sb1-ar-aging", "AgeBucket30",
+                   measure("Open Balance", "OpenBalance"), 6),
+        row_chart("tc-sb1-top-ar", "Top Customers by Receivables", "tq-sb1-ar-aging",
+                  "CardName", measure("Open Balance", "OpenBalance"), 10, 7),
+        row_chart("tc-sb1-top-ap", "Top Suppliers by Payables", "tq-sb1-ap-aging",
+                  "CardName", measure("Open Balance", "OpenBalance"), 10, 8),
         row_chart("tc-sb1-cust-balances", "Top Customer Balances", "tq-sb1-customers",
-                  "CardName", measure("Balance", "Balance"), 15, 2),
+                  "CardName", measure("Balance", "Balance"), 15, 9),
         row_chart("tc-sb1-supp-balances", "Top Supplier Balances", "tq-sb1-suppliers",
-                  "CardName", measure("Balance", "Balance"), 15, 3),
+                  "CardName", measure("Balance", "Balance"), 15, 10),
         table_chart(
             "tc-sb1-ar-due", "AR by Due Date", "tq-sb1-open-ar",
             rows=[dim("CardName", name="Customer"), dim("DocDueDate", "Date", name="Due Date")],
             values=[measure("Amount", "DocTotal")],
-            order_by=[order("Due Date")], limit=25, sort_order=4,
+            order_by=[order("Due Date")], limit=25, sort_order=11,
         ),
         table_chart(
             "tc-sb1-ap-due", "AP by Due Date", "tq-sb1-open-ap",
             rows=[dim("CardName", name="Supplier"), dim("DocDueDate", "Date", name="Due Date")],
             values=[measure("Amount", "DocTotal")],
-            order_by=[order("Due Date")], limit=25, sort_order=5,
+            order_by=[order("Due Date")], limit=25, sort_order=12,
         ),
     ],
     dashboard_items=[
@@ -470,18 +606,29 @@ write_template(
             "tc-sb1-ar-kpis": "`tq-sb1-open-ar`.`CardName`",
             "tc-sb1-ar-due": "`tq-sb1-open-ar`.`CardName`",
             "tc-sb1-cust-balances": "`tq-sb1-customers`.`CardName`",
+            "tc-sb1-ar-overdue-kpi": "`tq-sb1-ar-overdue`.`CardName`",
+            "tc-sb1-top-ar": "`tq-sb1-ar-aging`.`CardName`",
         }),
         text_filter("Supplier", "truck", {
             "tc-sb1-ap-kpis": "`tq-sb1-open-ap`.`CardName`",
             "tc-sb1-ap-due": "`tq-sb1-open-ap`.`CardName`",
             "tc-sb1-supp-balances": "`tq-sb1-suppliers`.`CardName`",
+            "tc-sb1-ap-overdue-kpi": "`tq-sb1-ap-overdue`.`CardName`",
+            "tc-sb1-top-ap": "`tq-sb1-ap-aging`.`CardName`",
         }, x=4),
-        chart_item("tc-sb1-ar-kpis", 0, 1, 10, 3),
-        chart_item("tc-sb1-ap-kpis", 10, 1, 10, 3),
-        chart_item("tc-sb1-cust-balances", 0, 4, 10, 8),
-        chart_item("tc-sb1-supp-balances", 10, 4, 10, 8),
-        chart_item("tc-sb1-ar-due", 0, 12, 10, 8),
-        chart_item("tc-sb1-ap-due", 10, 12, 10, 8),
+        chart_item("tc-sb1-ar-kpis", 0, 1, 5, 3),
+        chart_item("tc-sb1-ar-overdue-kpi", 5, 1, 5, 3),
+        chart_item("tc-sb1-ap-kpis", 10, 1, 5, 3),
+        chart_item("tc-sb1-ap-overdue-kpi", 15, 1, 5, 3),
+        chart_item("tc-sb1-ar-aging10", 0, 4, 10, 8),
+        chart_item("tc-sb1-ap-aging10", 10, 4, 10, 8),
+        chart_item("tc-sb1-top-ar", 0, 12, 10, 8),
+        chart_item("tc-sb1-top-ap", 10, 12, 10, 8),
+        chart_item("tc-sb1-cust-balances", 0, 20, 10, 8),
+        chart_item("tc-sb1-supp-balances", 10, 20, 10, 8),
+        chart_item("tc-sb1-ar-due", 0, 28, 10, 8),
+        chart_item("tc-sb1-ap-due", 10, 28, 10, 8),
+        chart_item("tc-sb1-ar-aging30", 0, 36, 20, 8),
     ],
 )
 
@@ -580,6 +727,14 @@ write_template(
         query("tq-fin-balances", "Account Balances", "CVT_FIN_BALANCES", None, 2),
         query("tq-fin-expenses", "Expense Accounts", "CVT_FIN_PNL_MONTHLY",
               [flt("ClassCode", "=", 6)], 3),
+        query("tq-fin-revenue", "Revenue (GL)", "CVT_FIN_PNL_MONTHLY",
+              [flt("ClassCode", "=", 4)], 4),
+        query("tq-fin-assets", "Assets", "CVT_FIN_BALANCES",
+              [flt("ClassCode", "=", 1)], 5),
+        query("tq-fin-liab", "Liabilities", "CVT_FIN_BALANCES",
+              [flt("ClassCode", "=", 2)], 6),
+        query("tq-fin-equity", "Equity", "CVT_FIN_BALANCES",
+              [flt("ClassCode", "=", 3)], 7),
     ],
     charts=[
         number_chart(
@@ -610,23 +765,107 @@ write_template(
                   "AcctName", measure("Spend", "NetDebit"), 15, 5),
         bar_chart("tc-fin-balances", "Balance Sheet Positions", "tq-fin-balances",
                   "AccountClass", measure("Balance", "Balance"), 100, 6),
+        number_chart(
+            "tc-fin-nsr", "Net Sales Revenue", "tq-fin-revenue",
+            [measure("Revenue", "Amount")],
+            [MONEY],
+            date_col="MonthStart", sort_order=7,
+        ),
+        number_chart(
+            "tc-fin-assets-kpi", "Total Assets", "tq-fin-assets",
+            [measure("Assets", "Balance")],
+            [MONEY],
+            sort_order=8,
+        ),
+        number_chart(
+            "tc-fin-liab-kpi", "Total Liabilities", "tq-fin-liab",
+            [measure("Liabilities", "CreditBalance")],
+            [MONEY],
+            sort_order=9,
+        ),
+        number_chart(
+            "tc-fin-equity-kpi", "Total Equity", "tq-fin-equity",
+            [measure("Equity", "CreditBalance")],
+            [MONEY],
+            sort_order=10,
+        ),
+        bar_chart("tc-fin-by-cc", "Net Result by Cost Center", "tq-fin-pnl",
+                  "CostCenter", measure("Net Result", "Amount"), 100, 11),
     ],
     dashboard_items=[
         date_filter({
             "tc-fin-kpis": "`tq-fin-pnl`.`MonthStart`",
+            "tc-fin-nsr": "`tq-fin-revenue`.`MonthStart`",
             "tc-fin-cash-kpis": "`tq-fin-cash`.`MonthStart`",
             "tc-fin-pnl-waterfall": "`tq-fin-pnl`.`MonthStart`",
             "tc-fin-pnl-trend": "`tq-fin-pnl`.`MonthStart`",
             "tc-fin-cash-trend": "`tq-fin-cash`.`MonthStart`",
             "tc-fin-top-expenses": "`tq-fin-expenses`.`MonthStart`",
+            "tc-fin-by-cc": "`tq-fin-pnl`.`MonthStart`",
         }),
-        chart_item("tc-fin-kpis", 0, 1, 8, 3),
-        chart_item("tc-fin-cash-kpis", 8, 1, 12, 3),
-        chart_item("tc-fin-pnl-waterfall", 0, 4, 10, 8),
-        chart_item("tc-fin-pnl-trend", 10, 4, 10, 8),
-        chart_item("tc-fin-cash-trend", 0, 12, 10, 8),
-        chart_item("tc-fin-top-expenses", 10, 12, 10, 8),
-        chart_item("tc-fin-balances", 0, 20, 20, 8),
+        chart_item("tc-fin-kpis", 0, 1, 5, 3),
+        chart_item("tc-fin-nsr", 5, 1, 5, 3),
+        chart_item("tc-fin-cash-kpis", 10, 1, 10, 3),
+        chart_item("tc-fin-assets-kpi", 0, 4, 7, 3),
+        chart_item("tc-fin-liab-kpi", 7, 4, 7, 3),
+        chart_item("tc-fin-equity-kpi", 14, 4, 6, 3),
+        chart_item("tc-fin-pnl-waterfall", 0, 7, 10, 8),
+        chart_item("tc-fin-pnl-trend", 10, 7, 10, 8),
+        chart_item("tc-fin-cash-trend", 0, 15, 10, 8),
+        chart_item("tc-fin-by-cc", 10, 15, 10, 8),
+        chart_item("tc-fin-top-expenses", 0, 23, 10, 8),
+        chart_item("tc-fin-balances", 10, 23, 10, 8),
+    ],
+)
+
+# ---------------------------------------------------------------- crm / opportunities
+write_template(
+    "sap-crm",
+    sap_manifest(
+        "Sales Opportunities",
+        "The CRM pipeline at a glance — open pipeline value (potential and "
+        "weighted), win/loss split, opportunities opened per month and the "
+        "customers with the most on the table.",
+        "Built from Sales Opportunities (OOPR). Status codes: O = open, "
+        "W = won, L = lost. Potential uses MaxSumLoc (local currency); "
+        "Weighted uses WtSumLoc (potential x closing probability).",
+        "CRM",
+    ),
+    "template-sap-crm",
+    "Sales Opportunities (SAP B1)",
+    queries=[
+        query("tq-sb1-opps", "All Opportunities", "OOPR", None, 0),
+        query("tq-sb1-open-opps", "Open Opportunities", "OOPR",
+              [flt("Status", "=", "O")], 1),
+    ],
+    charts=[
+        number_chart(
+            "tc-sb1-opp-kpis", "Pipeline", "tq-sb1-open-opps",
+            [
+                measure("Potential Amount", "MaxSumLoc"),
+                measure("Weighted Amount", "WtSumLoc"),
+                measure("Open Opportunities", "OpprId", "count", "Integer"),
+            ],
+            [MONEY, MONEY, PLAIN],
+            sort_order=0,
+        ),
+        line_chart("tc-sb1-opp-trend", "Opportunities Opened per Month", "tq-sb1-opps",
+                   "OpenDate",
+                   [measure("Opportunities", "OpprId", "count", "Integer")], 1),
+        donut_chart("tc-sb1-opp-status", "Won / Lost / Open", "tq-sb1-opps",
+                    "Status", measure("Opportunities", "OpprId", "count", "Integer"), 2),
+        row_chart("tc-sb1-top-opps", "Top Customers by Open Potential", "tq-sb1-open-opps",
+                  "CardCode", measure("Potential Amount", "MaxSumLoc"), 10, 3),
+    ],
+    dashboard_items=[
+        date_filter({
+            "tc-sb1-opp-trend": "`tq-sb1-opps`.`OpenDate`",
+            "tc-sb1-opp-status": "`tq-sb1-opps`.`OpenDate`",
+        }),
+        chart_item("tc-sb1-opp-kpis", 0, 1, 20, 3),
+        chart_item("tc-sb1-opp-trend", 0, 4, 12, 8),
+        chart_item("tc-sb1-opp-status", 12, 4, 8, 8),
+        chart_item("tc-sb1-top-opps", 0, 12, 20, 8),
     ],
 )
 

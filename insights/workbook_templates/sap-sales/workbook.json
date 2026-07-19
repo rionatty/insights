@@ -64,6 +64,84 @@
       }
      }
     ]
+   },
+   "tq-sb1-cn": {
+    "name": "tq-sb1-cn",
+    "title": "AR Credit Notes",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 2,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "ORIN"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-open-so": {
+    "name": "tq-sb1-open-so",
+    "title": "Open Sales Orders",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 3,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "ORDR"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       },
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DocStatus"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
    }
   },
   "charts": {
@@ -142,12 +220,167 @@
      }
     }
    },
+   "tc-sb1-gp-kpi": {
+    "name": "tc-sb1-gp-kpi",
+    "title": "Profitability",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-sb1-inv-lines",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Gross Profit",
+       "column_name": "GrssProfit",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Line Revenue",
+       "column_name": "LineTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "DocDate",
+      "column_name": "DocDate",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-sb1-returns-kpi": {
+    "name": "tc-sb1-returns-kpi",
+    "title": "Sales Returns",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-cn",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Return Amount",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Credit Notes",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "DocDate",
+      "column_name": "DocDate",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-sb1-open-so-kpi": {
+    "name": "tc-sb1-open-so-kpi",
+    "title": "Sales Orders Not Delivered",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-open-so",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Open Order Value",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Open Orders",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
    "tc-sb1-revenue-trend": {
     "name": "tc-sb1-revenue-trend",
     "title": "Revenue Trend",
     "workbook": "template-sap-sales",
     "folder": null,
-    "sort_order": 1,
+    "sort_order": 4,
     "query": "tq-sb1-inv",
     "chart_type": "Line",
     "config": {
@@ -193,7 +426,7 @@
     "title": "Revenue by Warehouse",
     "workbook": "template-sap-sales",
     "folder": null,
-    "sort_order": 2,
+    "sort_order": 5,
     "query": "tq-sb1-inv-lines",
     "chart_type": "Donut",
     "config": {
@@ -222,7 +455,7 @@
     "title": "Top 10 Customers",
     "workbook": "template-sap-sales",
     "folder": null,
-    "sort_order": 3,
+    "sort_order": 6,
     "query": "tq-sb1-inv",
     "chart_type": "Row",
     "config": {
@@ -266,7 +499,7 @@
     "title": "Top 10 Items",
     "workbook": "template-sap-sales",
     "folder": null,
-    "sort_order": 4,
+    "sort_order": 7,
     "query": "tq-sb1-inv-lines",
     "chart_type": "Row",
     "config": {
@@ -307,10 +540,10 @@
    },
    "tc-sb1-gp-trend": {
     "name": "tc-sb1-gp-trend",
-    "title": "Gross Profit Trend",
+    "title": "Revenue vs Gross Profit",
     "workbook": "template-sap-sales",
     "folder": null,
-    "sort_order": 5,
+    "sort_order": 8,
     "query": "tq-sb1-inv-lines",
     "chart_type": "Line",
     "config": {
@@ -324,6 +557,14 @@
      },
      "y_axis": {
       "series": [
+       {
+        "measure": {
+         "measure_name": "Revenue",
+         "column_name": "LineTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       },
        {
         "measure": {
          "measure_name": "Gross Profit",
@@ -367,6 +608,8 @@
       "default_value": "Last 12 months",
       "links": {
        "tc-sb1-sales-kpis": "`tq-sb1-inv`.`DocDate`",
+       "tc-sb1-gp-kpi": "`tq-sb1-inv-lines`.`DocDate`",
+       "tc-sb1-returns-kpi": "`tq-sb1-cn`.`DocDate`",
        "tc-sb1-revenue-trend": "`tq-sb1-inv`.`DocDate`",
        "tc-sb1-top-customers": "`tq-sb1-inv`.`DocDate`",
        "tc-sb1-rev-by-whs": "`tq-sb1-inv-lines`.`DocDate`",
@@ -394,11 +637,44 @@
      },
      {
       "type": "chart",
+      "chart": "tc-sb1-gp-kpi",
+      "layout": {
+       "i": "item-tc-sb1-gp-kpi",
+       "x": 0,
+       "y": 4,
+       "w": 8,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-returns-kpi",
+      "layout": {
+       "i": "item-tc-sb1-returns-kpi",
+       "x": 8,
+       "y": 4,
+       "w": 6,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-open-so-kpi",
+      "layout": {
+       "i": "item-tc-sb1-open-so-kpi",
+       "x": 14,
+       "y": 4,
+       "w": 6,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
       "chart": "tc-sb1-revenue-trend",
       "layout": {
        "i": "item-tc-sb1-revenue-trend",
        "x": 0,
-       "y": 4,
+       "y": 7,
        "w": 12,
        "h": 8
       }
@@ -409,7 +685,7 @@
       "layout": {
        "i": "item-tc-sb1-rev-by-whs",
        "x": 12,
-       "y": 4,
+       "y": 7,
        "w": 8,
        "h": 8
       }
@@ -420,7 +696,7 @@
       "layout": {
        "i": "item-tc-sb1-top-customers",
        "x": 0,
-       "y": 12,
+       "y": 15,
        "w": 10,
        "h": 8
       }
@@ -431,7 +707,7 @@
       "layout": {
        "i": "item-tc-sb1-top-items",
        "x": 10,
-       "y": 12,
+       "y": 15,
        "w": 10,
        "h": 8
       }
@@ -442,7 +718,7 @@
       "layout": {
        "i": "item-tc-sb1-gp-trend",
        "x": 0,
-       "y": 20,
+       "y": 23,
        "w": 20,
        "h": 8
       }

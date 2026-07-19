@@ -2,7 +2,7 @@
  "version": 1,
  "title": "Inventory Health",
  "description": "Stock levels, movement and gaps \u2014 on-hand by warehouse, in vs out movement trend, items out of stock and the biggest holdings.",
- "notes": "Built from Item Master (OITM), Warehouse Stock (OITW) and the Inventory Journal (OINM). Quantities are in each item's stock UoM; mixed-UoM totals are indicative.",
+ "notes": "Built from Item Master (OITM), Warehouse Stock (OITW), the Inventory Journal (OINM) and open Inventory Transfer Requests (OWTQ). Quantities are in each item's stock UoM; mixed-UoM totals are indicative. Stock value is the cumulative inventory journal value (cost), so it reflects all history regardless of the date filter.",
  "module": "Stock",
  "required_apps": [],
  "source_doctypes": [],

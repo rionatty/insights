@@ -107,6 +107,84 @@
       ]
      }
     ]
+   },
+   "tq-sb1-grpo": {
+    "name": "tq-sb1-grpo",
+    "title": "Open Goods Receipt POs",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 3,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OPDN"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       },
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DocStatus"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-preturns": {
+    "name": "tq-sb1-preturns",
+    "title": "Goods Returns",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 4,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "ORPD"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       }
+      ]
+     }
+    ]
    }
   },
   "charts": {
@@ -227,12 +305,110 @@
      }
     }
    },
+   "tc-sb1-grpo-kpi": {
+    "name": "tc-sb1-grpo-kpi",
+    "title": "GRPO Not Invoiced",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-sb1-grpo",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Value",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Receipts",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-preturn-kpi": {
+    "name": "tc-sb1-preturn-kpi",
+    "title": "Goods Returns",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-sb1-preturns",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Return Value",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Returns",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "DocDate",
+      "column_name": "DocDate",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
    "tc-sb1-spend-trend": {
     "name": "tc-sb1-spend-trend",
     "title": "Spend Trend",
     "workbook": "template-sap-purchasing",
     "folder": null,
-    "sort_order": 2,
+    "sort_order": 4,
     "query": "tq-sb1-bills",
     "chart_type": "Line",
     "config": {
@@ -273,12 +449,58 @@
      }
     }
    },
+   "tc-sb1-preturn-trend": {
+    "name": "tc-sb1-preturn-trend",
+    "title": "Goods Return Trend",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 5,
+    "query": "tq-sb1-preturns",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "DocDate",
+       "column_name": "DocDate",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Return Value",
+         "column_name": "DocTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
    "tc-sb1-top-suppliers": {
     "name": "tc-sb1-top-suppliers",
     "title": "Top 10 Suppliers",
     "workbook": "template-sap-purchasing",
     "folder": null,
-    "sort_order": 3,
+    "sort_order": 6,
     "query": "tq-sb1-bills",
     "chart_type": "Row",
     "config": {
@@ -322,7 +544,7 @@
     "title": "Top Purchased Items",
     "workbook": "template-sap-purchasing",
     "folder": null,
-    "sort_order": 4,
+    "sort_order": 7,
     "query": "tq-sb1-bill-lines",
     "chart_type": "Row",
     "config": {
@@ -366,7 +588,7 @@
     "title": "Open PO Backlog",
     "workbook": "template-sap-purchasing",
     "folder": null,
-    "sort_order": 5,
+    "sort_order": 8,
     "query": "tq-sb1-open-pos",
     "chart_type": "Table",
     "config": {
@@ -429,7 +651,9 @@
       "default_value": "Last 12 months",
       "links": {
        "tc-sb1-purchase-kpis": "`tq-sb1-bills`.`DocDate`",
+       "tc-sb1-preturn-kpi": "`tq-sb1-preturns`.`DocDate`",
        "tc-sb1-spend-trend": "`tq-sb1-bills`.`DocDate`",
+       "tc-sb1-preturn-trend": "`tq-sb1-preturns`.`DocDate`",
        "tc-sb1-top-suppliers": "`tq-sb1-bills`.`DocDate`",
        "tc-sb1-spend-by-item": "`tq-sb1-bill-lines`.`DocDate`"
       },
@@ -454,22 +678,55 @@
      },
      {
       "type": "chart",
+      "chart": "tc-sb1-open-po-kpis",
+      "layout": {
+       "i": "item-tc-sb1-open-po-kpis",
+       "x": 0,
+       "y": 4,
+       "w": 7,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-grpo-kpi",
+      "layout": {
+       "i": "item-tc-sb1-grpo-kpi",
+       "x": 7,
+       "y": 4,
+       "w": 7,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-preturn-kpi",
+      "layout": {
+       "i": "item-tc-sb1-preturn-kpi",
+       "x": 14,
+       "y": 4,
+       "w": 6,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
       "chart": "tc-sb1-spend-trend",
       "layout": {
        "i": "item-tc-sb1-spend-trend",
        "x": 0,
-       "y": 4,
+       "y": 7,
        "w": 12,
        "h": 8
       }
      },
      {
       "type": "chart",
-      "chart": "tc-sb1-open-po-kpis",
+      "chart": "tc-sb1-preturn-trend",
       "layout": {
-       "i": "item-tc-sb1-open-po-kpis",
+       "i": "item-tc-sb1-preturn-trend",
        "x": 12,
-       "y": 4,
+       "y": 7,
        "w": 8,
        "h": 8
       }
@@ -480,7 +737,7 @@
       "layout": {
        "i": "item-tc-sb1-top-suppliers",
        "x": 0,
-       "y": 12,
+       "y": 15,
        "w": 10,
        "h": 8
       }
@@ -491,7 +748,7 @@
       "layout": {
        "i": "item-tc-sb1-spend-by-item",
        "x": 10,
-       "y": 12,
+       "y": 15,
        "w": 10,
        "h": 8
       }
@@ -502,7 +759,7 @@
       "layout": {
        "i": "item-tc-sb1-open-po-list",
        "x": 0,
-       "y": 20,
+       "y": 23,
        "w": 20,
        "h": 8
       }

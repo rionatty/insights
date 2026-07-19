@@ -106,6 +106,146 @@
       ]
      }
     ]
+   },
+   "tq-fin-revenue": {
+    "name": "tq-fin-revenue",
+    "title": "Revenue (GL)",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 4,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_PNL_MONTHLY"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "ClassCode"
+        },
+        "operator": "=",
+        "value": 4
+       }
+      ]
+     }
+    ]
+   },
+   "tq-fin-assets": {
+    "name": "tq-fin-assets",
+    "title": "Assets",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 5,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_BALANCES"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "ClassCode"
+        },
+        "operator": "=",
+        "value": 1
+       }
+      ]
+     }
+    ]
+   },
+   "tq-fin-liab": {
+    "name": "tq-fin-liab",
+    "title": "Liabilities",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 6,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_BALANCES"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "ClassCode"
+        },
+        "operator": "=",
+        "value": 2
+       }
+      ]
+     }
+    ]
+   },
+   "tq-fin-equity": {
+    "name": "tq-fin-equity",
+    "title": "Equity",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 7,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_BALANCES"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "ClassCode"
+        },
+        "operator": "=",
+        "value": 3
+       }
+      ]
+     }
+    ]
    }
   },
   "charts": {
@@ -461,6 +601,196 @@
       "filters": []
      }
     }
+   },
+   "tc-fin-nsr": {
+    "name": "tc-fin-nsr",
+    "title": "Net Sales Revenue",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 7,
+    "query": "tq-fin-revenue",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Revenue",
+       "column_name": "Amount",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "MonthStart"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "MonthStart",
+      "column_name": "MonthStart",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-fin-assets-kpi": {
+    "name": "tc-fin-assets-kpi",
+    "title": "Total Assets",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 8,
+    "query": "tq-fin-assets",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Assets",
+       "column_name": "Balance",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-fin-liab-kpi": {
+    "name": "tc-fin-liab-kpi",
+    "title": "Total Liabilities",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 9,
+    "query": "tq-fin-liab",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Liabilities",
+       "column_name": "CreditBalance",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-fin-equity-kpi": {
+    "name": "tc-fin-equity-kpi",
+    "title": "Total Equity",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 10,
+    "query": "tq-fin-equity",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Equity",
+       "column_name": "CreditBalance",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-fin-by-cc": {
+    "name": "tc-fin-by-cc",
+    "title": "Net Result by Cost Center",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 11,
+    "query": "tq-fin-pnl",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CostCenter",
+       "column_name": "CostCenter",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Net Result",
+         "column_name": "Amount",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Net Result"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
    }
   },
   "dashboards": {
@@ -478,11 +808,13 @@
       "default_value": "Last 12 months",
       "links": {
        "tc-fin-kpis": "`tq-fin-pnl`.`MonthStart`",
+       "tc-fin-nsr": "`tq-fin-revenue`.`MonthStart`",
        "tc-fin-cash-kpis": "`tq-fin-cash`.`MonthStart`",
        "tc-fin-pnl-waterfall": "`tq-fin-pnl`.`MonthStart`",
        "tc-fin-pnl-trend": "`tq-fin-pnl`.`MonthStart`",
        "tc-fin-cash-trend": "`tq-fin-cash`.`MonthStart`",
-       "tc-fin-top-expenses": "`tq-fin-expenses`.`MonthStart`"
+       "tc-fin-top-expenses": "`tq-fin-expenses`.`MonthStart`",
+       "tc-fin-by-cc": "`tq-fin-pnl`.`MonthStart`"
       },
       "layout": {
        "i": "filter-date",
@@ -499,7 +831,18 @@
        "i": "item-tc-fin-kpis",
        "x": 0,
        "y": 1,
-       "w": 8,
+       "w": 5,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-nsr",
+      "layout": {
+       "i": "item-tc-fin-nsr",
+       "x": 5,
+       "y": 1,
+       "w": 5,
        "h": 3
       }
      },
@@ -508,9 +851,42 @@
       "chart": "tc-fin-cash-kpis",
       "layout": {
        "i": "item-tc-fin-cash-kpis",
-       "x": 8,
+       "x": 10,
        "y": 1,
-       "w": 12,
+       "w": 10,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-assets-kpi",
+      "layout": {
+       "i": "item-tc-fin-assets-kpi",
+       "x": 0,
+       "y": 4,
+       "w": 7,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-liab-kpi",
+      "layout": {
+       "i": "item-tc-fin-liab-kpi",
+       "x": 7,
+       "y": 4,
+       "w": 7,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-equity-kpi",
+      "layout": {
+       "i": "item-tc-fin-equity-kpi",
+       "x": 14,
+       "y": 4,
+       "w": 6,
        "h": 3
       }
      },
@@ -520,7 +896,7 @@
       "layout": {
        "i": "item-tc-fin-pnl-waterfall",
        "x": 0,
-       "y": 4,
+       "y": 7,
        "w": 10,
        "h": 8
       }
@@ -531,7 +907,7 @@
       "layout": {
        "i": "item-tc-fin-pnl-trend",
        "x": 10,
-       "y": 4,
+       "y": 7,
        "w": 10,
        "h": 8
       }
@@ -542,7 +918,18 @@
       "layout": {
        "i": "item-tc-fin-cash-trend",
        "x": 0,
-       "y": 12,
+       "y": 15,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-by-cc",
+      "layout": {
+       "i": "item-tc-fin-by-cc",
+       "x": 10,
+       "y": 15,
        "w": 10,
        "h": 8
       }
@@ -552,8 +939,8 @@
       "chart": "tc-fin-top-expenses",
       "layout": {
        "i": "item-tc-fin-top-expenses",
-       "x": 10,
-       "y": 12,
+       "x": 0,
+       "y": 23,
        "w": 10,
        "h": 8
       }
@@ -563,9 +950,9 @@
       "chart": "tc-fin-balances",
       "layout": {
        "i": "item-tc-fin-balances",
-       "x": 0,
-       "y": 20,
-       "w": 20,
+       "x": 10,
+       "y": 23,
+       "w": 10,
        "h": 8
       }
      }

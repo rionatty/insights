@@ -1,5 +1,5 @@
 -- CyveTech finance analysis layer for SAP Business One (SQL Server)
--- Run once per company database in SSMS. Creates four CVT_FIN_* views that
+-- Run once per company database in SSMS. Creates the CVT_* views that
 -- Insights (dashboards, templates and the AI ask-box) build on.
 -- Uses DROP + CREATE (not CREATE OR ALTER) so it runs on SQL Server 2012+.
 
@@ -77,7 +77,8 @@ GO
 CREATE VIEW dbo.CVT_FIN_BALANCES AS
 SELECT
     AccountClass, ClassCode, AcctCode, AcctName,
-    SUM(DebitBalance) AS Balance
+    SUM(DebitBalance)  AS Balance,
+    -SUM(DebitBalance) AS CreditBalance  -- positive for liabilities/equity
 FROM dbo.CVT_FIN_GL
 WHERE ClassCode BETWEEN 1 AND 3
 GROUP BY AccountClass, ClassCode, AcctCode, AcctName;
@@ -110,4 +111,74 @@ FROM (
     WHERE P.Canceled = 'N'
 ) X
 GROUP BY MonthStart;
+GO
+
+-- ======================================================== receivables aging
+-- Every open (unpaid, uncancelled) AR invoice with its remaining balance and
+-- days overdue, pre-bucketed for aging charts. Bucket labels are zero-padded
+-- so an alphabetical sort is also the correct age order.
+IF OBJECT_ID('dbo.CVT_AR_AGING', 'V') IS NOT NULL
+    DROP VIEW dbo.CVT_AR_AGING;
+GO
+CREATE VIEW dbo.CVT_AR_AGING AS
+SELECT
+    I.DocEntry, I.DocNum, I.CardCode, I.CardName,
+    I.DocDate, I.DocDueDate,
+    CAST(I.DocTotal - I.PaidToDate AS FLOAT)  AS OpenBalance,
+    DATEDIFF(DAY, I.DocDueDate, GETDATE())    AS DaysOverdue,
+    CASE
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 0  THEN 'Not due'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 10 THEN '01-10'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 20 THEN '11-20'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 30 THEN '21-30'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 40 THEN '31-40'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 50 THEN '41-50'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 60 THEN '51-60'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 90 THEN '61-90'
+        ELSE '91+'
+    END AS AgeBucket10,
+    CASE
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 0   THEN 'Not due'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 30  THEN '01-30'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 60  THEN '31-60'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 90  THEN '61-90'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 120 THEN '91-120'
+        ELSE '>120'
+    END AS AgeBucket30
+FROM dbo.OINV I
+WHERE I.CANCELED = 'N' AND I.DocStatus = 'O';
+GO
+
+-- =========================================================== payables aging
+-- Mirror of CVT_AR_AGING for open AP invoices (what you owe suppliers).
+IF OBJECT_ID('dbo.CVT_AP_AGING', 'V') IS NOT NULL
+    DROP VIEW dbo.CVT_AP_AGING;
+GO
+CREATE VIEW dbo.CVT_AP_AGING AS
+SELECT
+    I.DocEntry, I.DocNum, I.CardCode, I.CardName,
+    I.DocDate, I.DocDueDate,
+    CAST(I.DocTotal - I.PaidToDate AS FLOAT)  AS OpenBalance,
+    DATEDIFF(DAY, I.DocDueDate, GETDATE())    AS DaysOverdue,
+    CASE
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 0  THEN 'Not due'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 10 THEN '01-10'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 20 THEN '11-20'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 30 THEN '21-30'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 40 THEN '31-40'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 50 THEN '41-50'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 60 THEN '51-60'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 90 THEN '61-90'
+        ELSE '91+'
+    END AS AgeBucket10,
+    CASE
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 0   THEN 'Not due'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 30  THEN '01-30'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 60  THEN '31-60'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 90  THEN '61-90'
+        WHEN DATEDIFF(DAY, I.DocDueDate, GETDATE()) <= 120 THEN '91-120'
+        ELSE '>120'
+    END AS AgeBucket30
+FROM dbo.OPCH I
+WHERE I.CANCELED = 'N' AND I.DocStatus = 'O';
 GO
