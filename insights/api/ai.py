@@ -132,23 +132,46 @@ def ask_ollama(question: str, system: str, model: str | None = None) -> str:
     return response.json()["choices"][0]["message"]["content"]
 
 
+# the SAP B1 tables that answer 95% of business questions: sales, credit
+# notes, deliveries, purchases, master data, inventory, GL and payments.
+# Without this tier, an alphabetical sort fills the table budget with
+# obscure tables (AAC1, ACR1, ...) before any document table appears.
+CORE_B1_TABLES = {
+    "OINV", "INV1", "ORIN", "RIN1", "ODLN", "DLN1", "ORDR", "RDR1",
+    "OPCH", "PCH1", "OPOR", "POR1",
+    "OCRD", "OITM", "OITB", "OITW", "OINM", "OSLP",
+    "JDT1", "OACT", "ORCT", "OVPM", "OPRC", "OPRJ",
+}
+
+# compact semantics the model can't infer from column names alone; appended
+# to the schema context when the core document tables are present
+B1_SCHEMA_HINTS = """
+SAP B1 notes:
+- Sales: OINV (invoice header: DocDate, CardName, DocTotal, CANCELED) + INV1 (lines: ItemCode, Dscription, Quantity, LineTotal). Best sellers = SUM over INV1 joined to OINV. Always filter OINV.CANCELED = 'N'.
+- Credit notes ORIN/RIN1 reduce sales. Purchases: OPCH/PCH1. GL journal: JDT1 joined to OACT.
+- OINM is the warehouse stock journal, NOT sales revenue."""
+
+
 def _table_priority(t) -> tuple:
     """Curated semantic-layer views first (CVT_*, V_*), then other custom
-    views, then base tables. SAP B1's built-in B1_* system views last —
-    they crowd out the useful schema and mislead the model."""
+    views, then the core B1 document tables, then remaining tables. SAP B1's
+    built-in B1_* system views last — they crowd out the useful schema and
+    mislead the model."""
     name = (t.table or "").upper()
     if name.startswith(("CVT_", "V_")):
         rank = 0
     elif t.object_type == "View" and not name.startswith("B1_"):
         rank = 1
-    elif t.object_type != "View":
+    elif name in CORE_B1_TABLES:
         rank = 2
-    else:
+    elif t.object_type != "View":
         rank = 3
+    else:
+        rank = 4
     return (rank, name)
 
 
-def build_schema_context(data_source: str, max_tables: int = 15, max_columns: int = 40) -> str:
+def build_schema_context(data_source: str, max_tables: int = 20, max_columns: int = 40) -> str:
     """Compact schema description for the prompt, prioritized so the curated
     semantic layer wins the table budget; cached because reading remote
     schemas is slow. Stored procedures are excluded (not directly queryable)."""
@@ -180,7 +203,12 @@ def build_schema_context(data_source: str, max_tables: int = 15, max_columns: in
                     lines.append(f"- {t.table}({columns})")
                 except Exception:
                     continue
-        return "\n".join(lines)
+
+        context = "\n".join(lines)
+        included = {t.table.upper() for t in tables}
+        if included & {"OINV", "INV1", "JDT1", "OINM"}:
+            context += "\n" + B1_SCHEMA_HINTS
+        return context
 
     # bump the version suffix whenever the semantic layer changes shape so
     # deployed sites pick up the new columns without waiting out the TTL
@@ -198,6 +226,26 @@ def build_schema_context(data_source: str, max_tables: int = 15, max_columns: in
 def extract_sql(content: str) -> str:
     fenced = re.search(r"```(?:sql)?\s*(.+?)```", content, re.DOTALL | re.IGNORECASE)
     sql = (fenced.group(1) if fenced else content).strip().rstrip(";").strip()
+    return sql
+
+
+def normalize_sql(sql: str, dialect: str | None) -> str:
+    """Small models emit MySQL-flavored SQL (LIMIT, backticks) no matter
+    which dialect the prompt asks for; transpile to the target dialect as a
+    best effort (e.g. LIMIT 10 -> SELECT TOP 10 on SQL Server). Falls back
+    to the original SQL when nothing parses."""
+    if not dialect:
+        return sql
+    import sqlglot
+
+    for read in (dialect, "mysql", None):
+        try:
+            statements = sqlglot.transpile(sql, read=read, write=dialect)
+        except Exception:
+            continue
+        # keep multiple statements joined so validate_sql rejects them with
+        # its clear message instead of silently running just the first
+        return ";\n".join(statements) if statements else sql
     return sql
 
 
@@ -241,7 +289,7 @@ def ask(data_source: str, question: str):
     else:
         content = ask_ollama(question, system)
 
-    sql = extract_sql(content)
+    sql = normalize_sql(extract_sql(content), dialect)
     # return the SQL alongside any failure so the user can see what the
     # model wrote instead of a bare error toast
     error = validate_sql(sql)
