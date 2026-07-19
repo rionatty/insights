@@ -5,6 +5,49 @@ import frappe
 import ibis
 
 
+def _patch_mssql_date_truncate():
+    """ibis compiles date/timestamp truncation to DATETRUNC(), which only
+    exists in SQL Server 2022+. Rewrite it as the classic
+    DATEADD(unit, DATEDIFF(unit, 0, x), 0) pattern, which every supported
+    SQL Server version understands. Sub-minute units keep the original
+    compilation (DATEDIFF would overflow int for seconds since 1900)."""
+    try:
+        import sqlglot.expressions as sge
+        from ibis.backends.sql.compilers.mssql import MSSQLCompiler
+    except ImportError:
+        return
+
+    if getattr(MSSQLCompiler, "_cyvetech_datetrunc_patched", False):
+        return
+
+    units = {
+        "Y": "year",
+        "Q": "quarter",
+        "M": "month",
+        "W": "week",
+        "D": "day",
+        "h": "hour",
+        "m": "minute",
+    }
+    original = MSSQLCompiler.visit_DateTimestampTruncate
+
+    def visit_DateTimestampTruncate(self, op, *, arg, unit):
+        name = units.get(unit.short)
+        if name is None:
+            return original(self, op, arg=arg, unit=unit)
+        zero = sge.convert(0)
+        diff = self.f.datediff(self.v[name], zero, arg)
+        return self.f.dateadd(self.v[name], diff, zero)
+
+    MSSQLCompiler.visit_DateTimestampTruncate = visit_DateTimestampTruncate
+    MSSQLCompiler.visit_DateTruncate = visit_DateTimestampTruncate
+    MSSQLCompiler.visit_TimestampTruncate = visit_DateTimestampTruncate
+    MSSQLCompiler._cyvetech_datetrunc_patched = True
+
+
+_patch_mssql_date_truncate()
+
+
 def get_mssql_connection(data_source):
     if not frappe.conf.get("mssql_odbc_driver"):
         frappe.throw(

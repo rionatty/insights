@@ -1,7 +1,9 @@
 import { FormatGroupArgs } from '../query/components/formatting_utils'
 import { Dimension, Measure } from './query.types'
 
-export const AXIS_CHARTS = ['Bar', 'Line', 'Row']
+// Waterfall and Pareto share the axis-chart config (x_axis/y_axis/split_by)
+// and must be listed here so chart.ts builds their summarized data query
+export const AXIS_CHARTS = ['Bar', 'Line', 'Row', 'Waterfall', 'Pareto']
 export type AxisChartType = (typeof AXIS_CHARTS)[number]
 
 export const CHARTS = [
@@ -13,8 +15,6 @@ export const CHARTS = [
 	'Map',
 	'Bubble',
 	'Sankey',
-	'Waterfall',
-	'Pareto',
 ]
 export type ChartType = (typeof CHARTS)[number]
 
