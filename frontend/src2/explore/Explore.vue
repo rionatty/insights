@@ -382,6 +382,20 @@ async function saveExploration() {
 	}
 }
 
+// single-row results (AI answers, values-only aggregations) render as big
+// KPI tiles instead of a one-line table
+const kpiTiles = computed(() => {
+	if (!results.value || results.value.rows.length !== 1) return null
+	const columns = results.value.columns
+	if (!columns.length || columns.length > 4) return null
+	const row = results.value.rows[0]
+	return columns.map((c: any) => ({
+		label: c.name,
+		value: row[c.name] == null ? '—' : formatValue(row[c.name], c.name),
+	}))
+})
+const kpiHasEmpty = computed(() => !!kpiTiles.value?.some((t) => t.value === '—'))
+
 const numericResultColumns = computed(() => {
 	if (!results.value) return new Set<string>()
 	return new Set(
@@ -655,6 +669,28 @@ document.title = 'Explore | Insights'
 					class="h-full min-h-80 w-full p-4"
 				>
 					<BaseChart class="h-full w-full" :options="chartOptions" />
+				</div>
+				<div
+					v-else-if="kpiTiles"
+					class="flex h-full flex-col items-center justify-center gap-4 p-8"
+				>
+					<div class="flex flex-wrap items-center justify-center gap-12">
+						<div v-for="tile in kpiTiles" :key="tile.label" class="text-center">
+							<div class="text-p-sm text-ink-gray-5">{{ tile.label }}</div>
+							<div
+								class="mt-1 text-3xl font-semibold tabular-nums text-ink-gray-9"
+							>
+								{{ tile.value }}
+							</div>
+						</div>
+					</div>
+					<div v-if="kpiHasEmpty" class="text-p-sm text-ink-gray-5">
+						{{
+							__(
+								'The query ran but matched no data — try an explicit period, e.g. "in June 2025".',
+							)
+						}}
+					</div>
 				</div>
 				<table v-else-if="results" class="w-full border-collapse text-p-sm">
 					<thead class="sticky top-0 bg-surface-gray-1">
