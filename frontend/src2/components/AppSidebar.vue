@@ -48,6 +48,7 @@
 import { useStorage } from '@vueuse/core'
 import {
 	Book,
+	Compass,
 	Database,
 	DatabaseZap,
 	LayoutGrid,
@@ -79,6 +80,11 @@ const links = ref([
 		label: __('Workbooks'),
 		icon: Book,
 		to: 'WorkbookList',
+	},
+	{
+		label: __('Explore'),
+		icon: Compass,
+		to: 'Explore',
 	},
 	{
 		label: __('Data Sources'),

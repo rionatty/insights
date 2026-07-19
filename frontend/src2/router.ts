@@ -31,6 +31,11 @@ const routes = [
 		component: () => import('./workbook/WorkbookList.vue'),
 	},
 	{
+		path: '/explore',
+		name: 'Explore',
+		component: () => import('./explore/Explore.vue'),
+	},
+	{
 		props: true,
 		name: 'Workbook',
 		path: '/workbook/:workbook_name',
