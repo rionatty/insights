@@ -1,13 +1,17 @@
 
+// ordered to match the SAP B1 Web Client (Fiori) cockpit look: light azure
+// bars first, soft green as the second series (blue + green line pairs),
+// then supporting hues
 export const COLOR_MAP = {
-	blue: '#318AD8',
-	pink: '#F683AE',
-	green: '#48BB74',
-	red: '#F56B6B',
-	yellow: '#FACF7A',
-	purple: '#44427B',
-	teal: '#5FD8C4',
+	blue: '#5CACE2',
+	green: '#8FCC63',
+	darkblue: '#318AD8',
 	orange: '#F8814F',
+	teal: '#5FD8C4',
+	yellow: '#FACF7A',
+	red: '#F56B6B',
+	purple: '#44427B',
+	pink: '#F683AE',
 	cyan: '#15CCEF',
 	grey: '#A6B1B9',
 	'#449CF0': '#449CF0',

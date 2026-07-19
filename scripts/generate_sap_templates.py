@@ -65,12 +65,14 @@ def chart(cid, title, qid, chart_type, config, sort_order=0):
     }
 
 
-def number_chart(cid, title, qid, columns, options, date_col=None, sort_order=0):
+def number_chart(cid, title, qid, columns, options, date_col=None, sort_order=0, negative_is_better=False):
     cfg = {
         "number_columns": columns,
         "number_column_options": options,
         "comparison": bool(date_col),
         "sparkline": bool(date_col),
+        # flips the delta colors for KPIs where growth is bad (returns, overdue)
+        "negative_is_better": negative_is_better,
         **base_config(),
     }
     if date_col:
@@ -282,7 +284,7 @@ write_template(
                 measure("Credit Notes", "DocEntry", "count", "Integer"),
             ],
             [MONEY, PLAIN],
-            date_col="DocDate", sort_order=2,
+            date_col="DocDate", sort_order=2, negative_is_better=True,
         ),
         number_chart(
             "tc-sb1-open-so-kpi", "Sales Orders Not Delivered", "tq-sb1-open-so",
@@ -386,7 +388,7 @@ write_template(
                 measure("Returns", "DocEntry", "count", "Integer"),
             ],
             [MONEY, PLAIN],
-            date_col="DocDate", sort_order=3,
+            date_col="DocDate", sort_order=3, negative_is_better=True,
         ),
         line_chart("tc-sb1-spend-trend", "Spend Trend", "tq-sb1-bills",
                    "DocDate", [measure("Spend", "DocTotal")], 4),

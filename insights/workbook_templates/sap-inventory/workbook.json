@@ -185,6 +185,7 @@
      ],
      "comparison": false,
      "sparkline": false,
+     "negative_is_better": false,
      "order_by": [],
      "limit": 100,
      "filters": {
@@ -217,6 +218,7 @@
      ],
      "comparison": false,
      "sparkline": false,
+     "negative_is_better": false,
      "order_by": [],
      "limit": 100,
      "filters": {
@@ -438,6 +440,7 @@
      ],
      "comparison": false,
      "sparkline": false,
+     "negative_is_better": false,
      "order_by": [],
      "limit": 100,
      "filters": {
@@ -470,6 +473,7 @@
      ],
      "comparison": false,
      "sparkline": false,
+     "negative_is_better": false,
      "order_by": [],
      "limit": 100,
      "filters": {

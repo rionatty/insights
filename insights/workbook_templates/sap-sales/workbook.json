@@ -198,6 +198,7 @@
      ],
      "comparison": true,
      "sparkline": true,
+     "negative_is_better": false,
      "order_by": [
       {
        "column": {
@@ -255,6 +256,7 @@
      ],
      "comparison": true,
      "sparkline": true,
+     "negative_is_better": false,
      "order_by": [
       {
        "column": {
@@ -311,6 +313,7 @@
      ],
      "comparison": true,
      "sparkline": true,
+     "negative_is_better": true,
      "order_by": [
       {
        "column": {
@@ -367,6 +370,7 @@
      ],
      "comparison": false,
      "sparkline": false,
+     "negative_is_better": false,
      "order_by": [],
      "limit": 100,
      "filters": {
