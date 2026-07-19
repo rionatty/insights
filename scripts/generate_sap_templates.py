@@ -150,7 +150,9 @@ def table_chart(cid, title, qid, rows, values, order_by, limit=20, sort_order=0)
     return chart(cid, title, qid, "Table", cfg, sort_order)
 
 
-def date_filter(links, x=0, y=0, w=4):
+# filters span the full row: the grid compacts vertically, so any free
+# columns in a row would pull later items up into it and stagger the layout
+def date_filter(links, x=0, y=0, w=20):
     return {
         "type": "filter",
         "filter_name": "Date Range",
@@ -163,7 +165,7 @@ def date_filter(links, x=0, y=0, w=4):
     }
 
 
-def text_filter(name, icon, links, x=0, y=0, w=4):
+def text_filter(name, icon, links, x=0, y=0, w=10):
     return {
         "type": "filter",
         "filter_name": name,
@@ -617,7 +619,7 @@ write_template(
             "tc-sb1-supp-balances": "`tq-sb1-suppliers`.`CardName`",
             "tc-sb1-ap-overdue-kpi": "`tq-sb1-ap-overdue`.`CardName`",
             "tc-sb1-top-ap": "`tq-sb1-ap-aging`.`CardName`",
-        }, x=4),
+        }, x=10),
         chart_item("tc-sb1-ar-kpis", 0, 1, 5, 3),
         chart_item("tc-sb1-ar-overdue-kpi", 5, 1, 5, 3),
         chart_item("tc-sb1-ap-kpis", 10, 1, 5, 3),
@@ -698,12 +700,12 @@ write_template(
             "tc-sb1-vat-by-customer": "`tq-sb1-out-vat`.`DocDate`",
             "tc-sb1-cnvat-kpis": "`tq-sb1-cn-vat`.`DocDate`",
         }),
-        chart_item("tc-sb1-outvat-kpis", 0, 1, 10, 3),
-        chart_item("tc-sb1-invat-kpis", 10, 1, 10, 3),
+        chart_item("tc-sb1-outvat-kpis", 0, 1, 7, 3),
+        chart_item("tc-sb1-invat-kpis", 7, 1, 7, 3),
+        chart_item("tc-sb1-cnvat-kpis", 14, 1, 6, 3),
         chart_item("tc-sb1-outvat-trend", 0, 4, 10, 8),
         chart_item("tc-sb1-invat-trend", 10, 4, 10, 8),
-        chart_item("tc-sb1-cnvat-kpis", 0, 12, 8, 3),
-        chart_item("tc-sb1-vat-by-customer", 8, 12, 12, 8),
+        chart_item("tc-sb1-vat-by-customer", 0, 12, 20, 8),
     ],
 )
 
