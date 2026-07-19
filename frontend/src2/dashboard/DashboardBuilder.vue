@@ -181,6 +181,11 @@ async function downloadDashboardImage() {
 			<div
 				ref="dashboardContainer"
 				class="flex-1 overflow-y-auto p-2 pt-0"
+				:class="
+					dashboard.editing
+						? ''
+						: 'bg-gradient-to-br from-[#3F5B77] via-[#35506C] to-[#2A3F55] !p-4'
+				"
 				@dragover="onDragOver"
 				@drop="onDrop"
 			>

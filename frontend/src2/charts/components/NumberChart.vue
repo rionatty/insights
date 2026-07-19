@@ -43,9 +43,10 @@ const cards = computed(() => {
 		const numberValues = numberValuesPerColumn.value[measure_name]
 		const currentValue = numberValues[numberValues.length - 1] || 0
 		const previousValue = numberValues[numberValues.length - 2] || 0
-		const delta = config.value.negative_is_better
-			? previousValue - currentValue
-			: currentValue - previousValue
+		// delta is the actual movement (drives the arrow); favorable says
+		// whether that movement is good (drives the green/red color)
+		const delta = currentValue - previousValue
+		const favorable = config.value.negative_is_better ? delta <= 0 : delta >= 0
 		const percentDelta = (delta / Math.abs(previousValue)) * 100
 
 		const prefix = getNumberOption(idx, 'prefix')
@@ -60,7 +61,9 @@ const cards = computed(() => {
 			currentValue: getFormattedValue(currentValue, decimal, shorten_numbers),
 			previousValue: getFormattedValue(previousValue, decimal, shorten_numbers),
 			delta,
-			percentDelta: getFormattedValue(percentDelta, decimal, shorten_numbers),
+			favorable,
+			// the arrow carries the direction, so show the percent as magnitude
+			percentDelta: getFormattedValue(Math.abs(percentDelta), decimal, shorten_numbers),
 			prefix,
 			suffix,
 			color,
@@ -101,6 +104,7 @@ function onDoubleClick(measure_name: string) {
 					values,
 					currentValue,
 					delta,
+					favorable,
 					percentDelta,
 					prefix,
 					suffix,
@@ -117,6 +121,13 @@ function onDoubleClick(measure_name: string) {
 					</span>
 					<div
 						class="flex-1 flex-shrink-0 truncate text-[24px] font-semibold leading-10"
+						:class="
+							!color && config.comparison
+								? favorable
+									? 'text-green-600'
+									: 'text-red-600'
+								: ''
+						"
 						:style="color && typeof color === 'string' ? { color: color } : {}"
 					>
 						{{ prefix }}{{ currentValue }}{{ suffix }}
@@ -124,15 +135,7 @@ function onDoubleClick(measure_name: string) {
 					<div
 						v-if="config.comparison"
 						class="flex items-center gap-1 text-xs font-medium"
-						:class="[
-							config.negative_is_better
-								? delta >= 0
-									? 'text-red-500'
-									: 'text-green-500'
-								: delta >= 0
-								  ? 'text-green-500'
-								  : 'text-red-500',
-						]"
+						:class="favorable ? 'text-green-500' : 'text-red-500'"
 					>
 						<span class="">
 							{{ delta >= 0 ? '↑' : '↓' }}
