@@ -229,6 +229,7 @@ async function runExploration() {
 	if (!selectedTable.value) return
 	running.value = true
 	aiSQL.value = ''
+	analysisText.value = ''
 	try {
 		results.value = await call('insights.api.explore.run_exploration', {
 			operations: JSON.stringify(buildOperations()),
@@ -246,6 +247,27 @@ const question = ref('')
 const asking = ref(false)
 const aiSQL = ref('')
 
+// ---- AI analysis narrative ----
+const analyzing = ref(false)
+const analysisText = ref('')
+
+async function analyzeResults() {
+	if (!results.value?.rows.length) return
+	analyzing.value = true
+	try {
+		const response = await call('insights.api.ai.analyze', {
+			columns: JSON.stringify(results.value.columns),
+			rows: JSON.stringify(results.value.rows.slice(0, 100)),
+			question: question.value || aiSQL.value || selectedTable.value || '',
+		})
+		analysisText.value = response.analysis
+	} catch (e: any) {
+		showErrorToast(e)
+	} finally {
+		analyzing.value = false
+	}
+}
+
 async function askAI() {
 	if (!selectedSource.value || !question.value.trim()) return
 	asking.value = true
@@ -254,6 +276,7 @@ async function askAI() {
 			data_source: selectedSource.value,
 			question: question.value,
 		})
+		analysisText.value = ''
 		aiSQL.value = response.sql
 		results.value = {
 			columns: response.columns,
@@ -396,6 +419,15 @@ document.title = 'Explore | Insights'
 				<template #icon>
 					<component :is="viewMode === 'table' ? BarChart3 : Table2" class="h-4 w-4" />
 				</template>
+			</Button>
+			<Button
+				v-if="results?.rows.length"
+				variant="outline"
+				:loading="analyzing"
+				@click="analyzeResults()"
+			>
+				<template #prefix><Sparkles class="h-4 w-4" /></template>
+				{{ __('Analyze') }}
 			</Button>
 			<Button v-if="results" variant="solid" @click="openSaveDialog()">
 				<template #prefix><Save class="h-4 w-4" /></template>
@@ -602,6 +634,12 @@ document.title = 'Explore | Insights'
 				class="border-b bg-surface-gray-1 px-3 py-2 font-mono text-p-sm text-ink-gray-6"
 			>
 				{{ aiSQL }}
+			</div>
+			<div
+				v-if="analysisText"
+				class="max-h-64 overflow-y-auto whitespace-pre-wrap border-b bg-surface-gray-1 px-4 py-3 text-p-sm leading-relaxed text-ink-gray-8"
+			>
+				{{ analysisText }}
 			</div>
 
 			<!-- results -->

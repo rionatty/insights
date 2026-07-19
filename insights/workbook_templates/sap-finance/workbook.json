@@ -1,0 +1,576 @@
+{
+ "version": 1.0,
+ "type": "Workbook",
+ "name": "template-sap-finance",
+ "doc": {
+  "name": "template-sap-finance",
+  "title": "Financial Statements (SAP B1)"
+ },
+ "dependencies": {
+  "folders": [],
+  "queries": {
+   "tq-fin-pnl": {
+    "name": "tq-fin-pnl",
+    "title": "P&L Monthly",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 0,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_PNL_MONTHLY"
+      }
+     }
+    ]
+   },
+   "tq-fin-cash": {
+    "name": "tq-fin-cash",
+    "title": "Cash Monthly",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 1,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_CASH_MONTHLY"
+      }
+     }
+    ]
+   },
+   "tq-fin-balances": {
+    "name": "tq-fin-balances",
+    "title": "Account Balances",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 2,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_BALANCES"
+      }
+     }
+    ]
+   },
+   "tq-fin-expenses": {
+    "name": "tq-fin-expenses",
+    "title": "Expense Accounts",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 3,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_FIN_PNL_MONTHLY"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "ClassCode"
+        },
+        "operator": "=",
+        "value": 6
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "charts": {
+   "tc-fin-kpis": {
+    "name": "tc-fin-kpis",
+    "title": "Result",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 0,
+    "query": "tq-fin-pnl",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Net Result",
+       "column_name": "Amount",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "MonthStart"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "MonthStart",
+      "column_name": "MonthStart",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-fin-cash-kpis": {
+    "name": "tc-fin-cash-kpis",
+    "title": "Cash",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-fin-cash",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Cash In",
+       "column_name": "CashIn",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Cash Out",
+       "column_name": "CashOut",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Net Cash",
+       "column_name": "NetCash",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "MonthStart"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "MonthStart",
+      "column_name": "MonthStart",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-fin-pnl-waterfall": {
+    "name": "tc-fin-pnl-waterfall",
+    "title": "P&L by Account Class",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 2,
+    "query": "tq-fin-pnl",
+    "chart_type": "Waterfall",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "AccountClass",
+       "column_name": "AccountClass",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Amount",
+         "column_name": "Amount",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "AccountClass"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-fin-pnl-trend": {
+    "name": "tc-fin-pnl-trend",
+    "title": "P&L Trend by Class",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 3,
+    "query": "tq-fin-pnl",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "MonthStart",
+       "column_name": "MonthStart",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Amount",
+         "column_name": "Amount",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "MonthStart"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "split_by": {
+      "dimension": {
+       "dimension_name": "AccountClass",
+       "column_name": "AccountClass",
+       "data_type": "String"
+      }
+     }
+    }
+   },
+   "tc-fin-cash-trend": {
+    "name": "tc-fin-cash-trend",
+    "title": "Cash In vs Out",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 4,
+    "query": "tq-fin-cash",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "MonthStart",
+       "column_name": "MonthStart",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Cash In",
+         "column_name": "CashIn",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       },
+       {
+        "measure": {
+         "measure_name": "Cash Out",
+         "column_name": "CashOut",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "MonthStart"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-fin-top-expenses": {
+    "name": "tc-fin-top-expenses",
+    "title": "Top Expense Accounts",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 5,
+    "query": "tq-fin-expenses",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "AcctName",
+       "column_name": "AcctName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Spend",
+         "column_name": "NetDebit",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Spend"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 15,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-fin-balances": {
+    "name": "tc-fin-balances",
+    "title": "Balance Sheet Positions",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 6,
+    "query": "tq-fin-balances",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "AccountClass",
+       "column_name": "AccountClass",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Balance",
+         "column_name": "Balance",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Balance"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   }
+  },
+  "dashboards": {
+   "td-sap-finance": {
+    "name": "td-sap-finance",
+    "title": "Financial Statements (SAP B1)",
+    "workbook": "template-sap-finance",
+    "items": [
+     {
+      "type": "filter",
+      "filter_name": "Date Range",
+      "filter_type": "Date",
+      "icon": "calendar",
+      "default_operator": "within",
+      "default_value": "Last 12 months",
+      "links": {
+       "tc-fin-kpis": "`tq-fin-pnl`.`MonthStart`",
+       "tc-fin-cash-kpis": "`tq-fin-cash`.`MonthStart`",
+       "tc-fin-pnl-waterfall": "`tq-fin-pnl`.`MonthStart`",
+       "tc-fin-pnl-trend": "`tq-fin-pnl`.`MonthStart`",
+       "tc-fin-cash-trend": "`tq-fin-cash`.`MonthStart`",
+       "tc-fin-top-expenses": "`tq-fin-expenses`.`MonthStart`"
+      },
+      "layout": {
+       "i": "filter-date",
+       "x": 0,
+       "y": 0,
+       "w": 4,
+       "h": 1
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-kpis",
+      "layout": {
+       "i": "item-tc-fin-kpis",
+       "x": 0,
+       "y": 1,
+       "w": 8,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-cash-kpis",
+      "layout": {
+       "i": "item-tc-fin-cash-kpis",
+       "x": 8,
+       "y": 1,
+       "w": 12,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-pnl-waterfall",
+      "layout": {
+       "i": "item-tc-fin-pnl-waterfall",
+       "x": 0,
+       "y": 4,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-pnl-trend",
+      "layout": {
+       "i": "item-tc-fin-pnl-trend",
+       "x": 10,
+       "y": 4,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-cash-trend",
+      "layout": {
+       "i": "item-tc-fin-cash-trend",
+       "x": 0,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-top-expenses",
+      "layout": {
+       "i": "item-tc-fin-top-expenses",
+       "x": 10,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-balances",
+      "layout": {
+       "i": "item-tc-fin-balances",
+       "x": 0,
+       "y": 20,
+       "w": 20,
+       "h": 8
+      }
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,11 @@
+{
+ "version": 1,
+ "title": "Financial Statements",
+ "description": "The general ledger turned into statements \u2014 P&L waterfall and trend by account class, monthly cash in vs out, top expense accounts and balance sheet positions.",
+ "notes": "Requires the CVT_FIN_* views (run scripts/sap_b1_finance_views.sql from the Insights repo against the company database first). Built from Journal Entries (JDT1/OACT) and Payments (ORCT/OVPM). Amounts follow the sign convention: revenue positive, costs negative.",
+ "module": "Accounts",
+ "required_apps": [],
+ "source_doctypes": [],
+ "system": "SAP Business One",
+ "data_source_placeholder": "SAP B1"
+}

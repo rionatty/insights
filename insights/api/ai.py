@@ -30,6 +30,18 @@ Rules:
 
 {schema}"""
 
+ANALYSIS_PROMPT = """You are a financial analyst writing for a business owner.
+Analyze the data the user provides and reply with a concise narrative:
+
+- Key trends and totals (state the actual numbers from the data)
+- Notable variances, outliers or concentrations
+- Ratios or comparisons where the data supports them
+- Two or three actionable observations
+
+Rules: use short markdown bullet points; plain language, no jargon; never
+invent numbers that are not derivable from the provided data; if the data is
+insufficient for a claim, say so instead of guessing."""
+
 
 def get_ollama_config() -> tuple[str, str]:
     url = (frappe.conf.get("ollama_url") or "http://localhost:11434").rstrip("/")
@@ -37,8 +49,8 @@ def get_ollama_config() -> tuple[str, str]:
     return url, model
 
 
-def ask_claude(question: str, dialect: str, schema: str) -> str:
-    """Generate SQL with Claude via the Anthropic API. Used when
+def ask_claude(question: str, system: str) -> str:
+    """Run a prompt through Claude via the Anthropic API. Used when
     'anthropic_api_key' is set in site config."""
     try:
         import anthropic
@@ -56,12 +68,12 @@ def ask_claude(question: str, dialect: str, schema: str) -> str:
             model=model,
             max_tokens=2048,
             thinking={"type": "adaptive"},
-            # cache the schema-bearing prompt: repeated questions against the
-            # same data source reuse it at ~0.1x input cost
+            # cache the system prompt: repeated calls against the same data
+            # source reuse it at ~0.1x input cost
             system=[
                 {
                     "type": "text",
-                    "text": SYSTEM_PROMPT.format(dialect=dialect, schema=schema),
+                    "text": system,
                     "cache_control": {"type": "ephemeral"},
                 }
             ],
@@ -82,22 +94,20 @@ def ask_claude(question: str, dialect: str, schema: str) -> str:
     return "".join(block.text for block in response.content if block.type == "text")
 
 
-def ask_ollama(question: str, dialect: str, schema: str) -> str:
-    """Generate SQL with a self-hosted Ollama model. The default when no
+def ask_ollama(question: str, system: str, model: str | None = None) -> str:
+    """Run a prompt through a self-hosted Ollama model. The default when no
     Anthropic API key is configured."""
     import requests
 
-    url, model = get_ollama_config()
+    url, default_model = get_ollama_config()
+    model = model or default_model
     try:
         response = requests.post(
             f"{url}/v1/chat/completions",
             json={
                 "model": model,
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT.format(dialect=dialect, schema=schema),
-                    },
+                    {"role": "system", "content": system},
                     {"role": "user", "content": question.strip()},
                 ],
                 "temperature": 0.1,
@@ -187,10 +197,11 @@ def ask(data_source: str, question: str):
     if not schema:
         frappe.throw("Could not read any table schemas for this data source")
 
+    system = SYSTEM_PROMPT.format(dialect=dialect, schema=schema)
     if frappe.conf.get("anthropic_api_key"):
-        content = ask_claude(question, dialect, schema)
+        content = ask_claude(question, system)
     else:
-        content = ask_ollama(question, dialect, schema)
+        content = ask_ollama(question, system)
 
     sql = extract_sql(content)
     validate_sql(sql)
@@ -206,3 +217,38 @@ def ask(data_source: str, question: str):
         "rows": results.to_dict(orient="records"),
         "time_taken": time_taken,
     }
+
+
+def _format_rows_for_prompt(columns, rows, limit: int = 100) -> str:
+    names = [c.get("name") for c in columns if c.get("name")]
+    lines = [" | ".join(names)]
+    for row in rows[:limit]:
+        lines.append(" | ".join(str(row.get(name, "")) for name in names))
+    return "\n".join(lines)
+
+
+@insights_whitelist()
+def analyze(columns, rows, question: str | None = None):
+    """Write a financial-analyst narrative over a result set. Uses Claude
+    when 'anthropic_api_key' is set; otherwise Ollama — preferring the
+    'ollama_analysis_model' site config (a general instruct model writes
+    better prose than a coder model) and falling back to 'ollama_model'."""
+    columns = frappe.parse_json(columns)
+    rows = frappe.parse_json(rows)
+    if not columns or not rows:
+        frappe.throw("No data to analyze")
+
+    context = (question or "").strip()
+    user_content = (
+        (f"Context: {context}\n\n" if context else "")
+        + "Data:\n"
+        + _format_rows_for_prompt(columns, rows)
+    )
+
+    if frappe.conf.get("anthropic_api_key"):
+        analysis = ask_claude(user_content, ANALYSIS_PROMPT)
+    else:
+        model = frappe.conf.get("ollama_analysis_model") or None
+        analysis = ask_ollama(user_content, ANALYSIS_PROMPT, model=model)
+
+    return {"analysis": analysis.strip()}

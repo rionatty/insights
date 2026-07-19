@@ -79,13 +79,24 @@ def number_chart(cid, title, qid, columns, options, date_col=None, sort_order=0)
     return chart(cid, title, qid, "Number", cfg, sort_order)
 
 
-def line_chart(cid, title, qid, date_col, series, sort_order=0):
+def line_chart(cid, title, qid, date_col, series, sort_order=0, split_by=None):
     cfg = {
         "x_axis": {"dimension": dim(date_col, "Date", "month")},
         "y_axis": {"series": [{"measure": m} for m in series], "show_data_labels": False},
         **base_config(order_by=[order(date_col)]),
     }
+    if split_by:
+        cfg["split_by"] = {"dimension": dim(split_by)}
     return chart(cid, title, qid, "Line", cfg, sort_order)
+
+
+def waterfall_chart(cid, title, qid, label_col, m, sort_order=0):
+    cfg = {
+        "x_axis": {"dimension": dim(label_col)},
+        "y_axis": {"series": [{"measure": m}]},
+        **base_config(order_by=[order(label_col)]),
+    }
+    return chart(cid, title, qid, "Waterfall", cfg, sort_order)
 
 
 def row_chart(cid, title, qid, label_col, m, limit=10, sort_order=0):
@@ -544,6 +555,78 @@ write_template(
         chart_item("tc-sb1-invat-trend", 10, 4, 10, 8),
         chart_item("tc-sb1-cnvat-kpis", 0, 12, 8, 3),
         chart_item("tc-sb1-vat-by-customer", 8, 12, 12, 8),
+    ],
+)
+
+# ---------------------------------------------------------------- finance
+write_template(
+    "sap-finance",
+    sap_manifest(
+        "Financial Statements",
+        "The general ledger turned into statements — P&L waterfall and trend "
+        "by account class, monthly cash in vs out, top expense accounts and "
+        "balance sheet positions.",
+        "Requires the CVT_FIN_* views (run scripts/sap_b1_finance_views.sql "
+        "from the Insights repo against the company database first). Built "
+        "from Journal Entries (JDT1/OACT) and Payments (ORCT/OVPM). Amounts "
+        "follow the sign convention: revenue positive, costs negative.",
+        "Accounts",
+    ),
+    "template-sap-finance",
+    "Financial Statements (SAP B1)",
+    queries=[
+        query("tq-fin-pnl", "P&L Monthly", "CVT_FIN_PNL_MONTHLY", None, 0),
+        query("tq-fin-cash", "Cash Monthly", "CVT_FIN_CASH_MONTHLY", None, 1),
+        query("tq-fin-balances", "Account Balances", "CVT_FIN_BALANCES", None, 2),
+        query("tq-fin-expenses", "Expense Accounts", "CVT_FIN_PNL_MONTHLY",
+              [flt("ClassCode", "=", 6)], 3),
+    ],
+    charts=[
+        number_chart(
+            "tc-fin-kpis", "Result", "tq-fin-pnl",
+            [measure("Net Result", "Amount")],
+            [MONEY],
+            date_col="MonthStart", sort_order=0,
+        ),
+        number_chart(
+            "tc-fin-cash-kpis", "Cash", "tq-fin-cash",
+            [
+                measure("Cash In", "CashIn"),
+                measure("Cash Out", "CashOut"),
+                measure("Net Cash", "NetCash"),
+            ],
+            [MONEY, MONEY, MONEY],
+            date_col="MonthStart", sort_order=1,
+        ),
+        waterfall_chart("tc-fin-pnl-waterfall", "P&L by Account Class", "tq-fin-pnl",
+                        "AccountClass", measure("Amount", "Amount"), 2),
+        line_chart("tc-fin-pnl-trend", "P&L Trend by Class", "tq-fin-pnl",
+                   "MonthStart", [measure("Amount", "Amount")], 3,
+                   split_by="AccountClass"),
+        line_chart("tc-fin-cash-trend", "Cash In vs Out", "tq-fin-cash",
+                   "MonthStart",
+                   [measure("Cash In", "CashIn"), measure("Cash Out", "CashOut")], 4),
+        row_chart("tc-fin-top-expenses", "Top Expense Accounts", "tq-fin-expenses",
+                  "AcctName", measure("Spend", "NetDebit"), 15, 5),
+        bar_chart("tc-fin-balances", "Balance Sheet Positions", "tq-fin-balances",
+                  "AccountClass", measure("Balance", "Balance"), 100, 6),
+    ],
+    dashboard_items=[
+        date_filter({
+            "tc-fin-kpis": "`tq-fin-pnl`.`MonthStart`",
+            "tc-fin-cash-kpis": "`tq-fin-cash`.`MonthStart`",
+            "tc-fin-pnl-waterfall": "`tq-fin-pnl`.`MonthStart`",
+            "tc-fin-pnl-trend": "`tq-fin-pnl`.`MonthStart`",
+            "tc-fin-cash-trend": "`tq-fin-cash`.`MonthStart`",
+            "tc-fin-top-expenses": "`tq-fin-expenses`.`MonthStart`",
+        }),
+        chart_item("tc-fin-kpis", 0, 1, 8, 3),
+        chart_item("tc-fin-cash-kpis", 8, 1, 12, 3),
+        chart_item("tc-fin-pnl-waterfall", 0, 4, 10, 8),
+        chart_item("tc-fin-pnl-trend", 10, 4, 10, 8),
+        chart_item("tc-fin-cash-trend", 0, 12, 10, 8),
+        chart_item("tc-fin-top-expenses", 10, 12, 10, 8),
+        chart_item("tc-fin-balances", 0, 20, 20, 8),
     ],
 )
 
