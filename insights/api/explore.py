@@ -45,3 +45,28 @@ def run_exploration(operations, limit: int = 500):
         "rows": results.to_dict(orient="records"),
         "time_taken": time_taken,
     }
+
+
+@insights_whitelist()
+def save_exploration(title: str, operations):
+    """Persist an exploration as a new workbook with a single builder query,
+    so a good ad-hoc analysis graduates into a permanent, chartable one."""
+    operations = frappe.parse_json(operations)
+    if not isinstance(operations, list) or not operations:
+        frappe.throw("Nothing to save")
+
+    title = (title or "").strip() or "Exploration"
+
+    workbook = frappe.new_doc("Insights Workbook")
+    workbook.title = title
+    workbook.insert()
+
+    query = frappe.new_doc("Insights Query v3")
+    query.title = title
+    query.workbook = workbook.name
+    query.is_builder_query = 1
+    query.use_live_connection = 1
+    query.operations = frappe.as_json(operations)
+    query.insert()
+
+    return {"workbook": workbook.name, "query": query.name}

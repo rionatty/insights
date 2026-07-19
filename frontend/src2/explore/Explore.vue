@@ -1,22 +1,30 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core'
-import { Breadcrumbs, FormControl, call } from 'frappe-ui'
+import { Breadcrumbs, Button, Dialog, FormControl, call } from 'frappe-ui'
 import {
+	BarChart3,
 	Calendar,
+	Columns3,
 	GripVertical,
 	Hash,
 	LoaderCircle,
 	Rows3,
+	Save,
 	Sigma,
 	SlidersHorizontal,
+	Table2,
 	Type,
 	X,
 } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import draggable from 'vuedraggable'
+import BaseChart from '../charts/components/BaseChart.vue'
+import { getBarChartOptions, getLineChartOptions, guessChart } from '../charts/helpers'
 import useDataSourceStore from '../data_source/data_source'
 import { getTables } from '../data_source/tables'
 import { showErrorToast } from '../helpers'
+import { createToast } from '../helpers/toasts'
 import { __ } from '../translation'
 
 type Field = {
@@ -36,6 +44,7 @@ const tables = ref<{ table_name: string }[]>([])
 const fields = ref<Field[]>([])
 
 const rowsZone = ref<Field[]>([])
+const columnsZone = ref<Field[]>([])
 const valuesZone = ref<Field[]>([])
 const filtersZone = ref<Field[]>([])
 
@@ -59,6 +68,7 @@ watch(selectedSource, async (source) => {
 watch(selectedTable, async (table) => {
 	fields.value = []
 	rowsZone.value = []
+	columnsZone.value = []
 	valuesZone.value = []
 	filtersZone.value = []
 	results.value = null
@@ -102,9 +112,9 @@ watch(
 	{ deep: true },
 )
 watch(
-	rowsZone,
-	(items) => {
-		for (const item of items) {
+	[rowsZone, columnsZone],
+	() => {
+		for (const item of [...rowsZone.value, ...columnsZone.value]) {
 			if (isTemporal(item.data_type) && !item.granularity) {
 				item.granularity = 'month'
 			}
@@ -174,12 +184,14 @@ function buildOperations() {
 		ops.push({ type: 'filter_group', logical_operator: 'And', filters: rules })
 	}
 
-	const dimensions = rowsZone.value.map((r) => ({
+	const toDimension = (r: Field) => ({
 		dimension_name: r.column_name,
 		column_name: r.column_name,
 		data_type: r.data_type,
 		...(isTemporal(r.data_type) ? { granularity: r.granularity } : {}),
-	}))
+	})
+	const dimensions = rowsZone.value.map(toDimension)
+	const columnDims = columnsZone.value.map(toDimension)
 	const measures = valuesZone.value.map((v) => ({
 		measure_name: measureName(v),
 		column_name: v.column_name,
@@ -187,15 +199,24 @@ function buildOperations() {
 		aggregation: v.aggregation,
 	}))
 
-	if (dimensions.length || measures.length) {
-		ops.push({ type: 'summarize', measures, dimensions })
-	}
-	if (measures.length) {
+	if (columnDims.length && measures.length) {
+		// two-axis pivot: rows down, column values across
 		ops.push({
-			type: 'order_by',
-			column: { type: 'column', column_name: measures[0].measure_name },
-			direction: 'desc',
+			type: 'pivot_wider',
+			rows: dimensions,
+			columns: columnDims,
+			values: measures,
+			max_column_values: 10,
 		})
+	} else if (dimensions.length || measures.length) {
+		ops.push({ type: 'summarize', measures, dimensions })
+		if (measures.length) {
+			ops.push({
+				type: 'order_by',
+				column: { type: 'column', column_name: measures[0].measure_name },
+				direction: 'desc',
+			})
+		}
 	}
 	return ops
 }
@@ -218,10 +239,96 @@ async function runExploration() {
 	}
 }
 
-watchDebounced([rowsZone, valuesZone, filtersZone], () => runExploration(), {
+watchDebounced([rowsZone, columnsZone, valuesZone, filtersZone], () => runExploration(), {
 	deep: true,
 	debounce: 500,
 })
+
+// ---- auto chart ----
+const viewMode = ref<'table' | 'chart'>('table')
+
+const chartGuess = computed(() => {
+	if (!results.value || columnsZone.value.length) return null
+	if (!rowsZone.value.length || !valuesZone.value.length) return null
+	const guess = guessChart(results.value.columns as any, results.value.rows)
+	return guess === 'bar' || guess === 'line' ? guess : null
+})
+
+// prefer the chart the moment one becomes possible, drop back when it isn't
+watch(chartGuess, (guess, previous) => {
+	if (guess && !previous) viewMode.value = 'chart'
+	if (!guess) viewMode.value = 'table'
+})
+
+const chartOptions = computed(() => {
+	if (!results.value || !chartGuess.value) return null
+	const first = rowsZone.value[0]
+	const config = {
+		x_axis: {
+			dimension: {
+				dimension_name: first.column_name,
+				column_name: first.column_name,
+				data_type: first.data_type,
+				...(isTemporal(first.data_type) ? { granularity: first.granularity } : {}),
+			},
+		},
+		y_axis: {
+			series: valuesZone.value.map((v) => ({
+				measure: {
+					measure_name: measureName(v),
+					column_name: v.column_name,
+					data_type: isNumeric(v.data_type) ? v.data_type : 'Integer',
+					aggregation: v.aggregation,
+				},
+			})),
+		},
+	}
+	const result = {
+		executedSQL: '',
+		totalRowCount: results.value.rows.length,
+		rows: results.value.rows,
+		formattedRows: results.value.rows,
+		columns: results.value.columns,
+		columnOptions: [],
+		timeTaken: results.value.time_taken,
+		lastExecutedAt: new Date(),
+	}
+	try {
+		return chartGuess.value === 'line'
+			? getLineChartOptions(config as any, result as any)
+			: getBarChartOptions(config as any, result as any)
+	} catch (e) {
+		return null
+	}
+})
+
+// ---- save to workbook ----
+const router = useRouter()
+const showSaveDialog = ref(false)
+const saveTitle = ref('')
+const saving = ref(false)
+
+function openSaveDialog() {
+	saveTitle.value = selectedTable.value ? `${selectedTable.value} Exploration` : 'Exploration'
+	showSaveDialog.value = true
+}
+
+async function saveExploration() {
+	saving.value = true
+	try {
+		const result = await call('insights.api.explore.save_exploration', {
+			title: saveTitle.value,
+			operations: JSON.stringify(buildOperations()),
+		})
+		createToast({ message: __('Saved to workbooks'), variant: 'success' })
+		showSaveDialog.value = false
+		router.push(`/workbook/${result.workbook}/query/${result.query}`)
+	} catch (e: any) {
+		showErrorToast(e)
+	} finally {
+		saving.value = false
+	}
+}
 
 const numericResultColumns = computed(() => {
 	if (!results.value) return new Set<string>()
@@ -252,6 +359,19 @@ document.title = 'Explore | Insights'
 			<span v-else-if="results" class="text-p-sm text-ink-gray-5">
 				{{ results.rows.length }} {{ __('rows (cached)') }}
 			</span>
+			<Button
+				v-if="chartGuess"
+				:variant="viewMode === 'table' ? 'outline' : 'subtle'"
+				@click="viewMode = viewMode === 'table' ? 'chart' : 'table'"
+			>
+				<template #icon>
+					<component :is="viewMode === 'table' ? BarChart3 : Table2" class="h-4 w-4" />
+				</template>
+			</Button>
+			<Button v-if="results" variant="solid" @click="openSaveDialog()">
+				<template #prefix><Save class="h-4 w-4" /></template>
+				{{ __('Save') }}
+			</Button>
 		</div>
 	</header>
 
@@ -294,7 +414,7 @@ document.title = 'Explore | Insights'
 
 		<!-- zones + results -->
 		<div class="flex flex-1 flex-col overflow-hidden">
-			<div class="grid grid-cols-3 gap-3 border-b p-3">
+			<div class="grid grid-cols-4 gap-3 border-b p-3">
 				<!-- rows -->
 				<div class="rounded border border-dashed border-outline-gray-2 p-2">
 					<div class="mb-1.5 flex items-center gap-1.5 text-p-sm font-medium text-ink-gray-5">
@@ -322,6 +442,38 @@ document.title = 'Explore | Insights'
 									class="ml-auto h-3.5 w-3.5 flex-shrink-0 cursor-pointer text-ink-gray-5"
 									:class="{ 'ml-1': isTemporal(element.data_type) }"
 									@click="removeFrom(rowsZone, element)"
+								/>
+							</div>
+						</template>
+					</draggable>
+				</div>
+				<!-- columns (pivot across) -->
+				<div class="rounded border border-dashed border-outline-gray-2 p-2">
+					<div class="mb-1.5 flex items-center gap-1.5 text-p-sm font-medium text-ink-gray-5">
+						<Columns3 class="h-3.5 w-3.5" /> {{ __('Columns') }}
+					</div>
+					<draggable
+						v-model="columnsZone"
+						group="fields"
+						item-key="id"
+						class="flex min-h-8 flex-col gap-1"
+					>
+						<template #item="{ element }">
+							<div
+								class="flex items-center gap-1.5 rounded bg-surface-gray-2 px-2 py-1 text-p-sm"
+							>
+								<span class="truncate">{{ element.column_name }}</span>
+								<FormControl
+									v-if="isTemporal(element.data_type)"
+									type="select"
+									class="ml-auto w-24"
+									v-model="element.granularity"
+									:options="granularityOptions"
+								/>
+								<X
+									class="ml-auto h-3.5 w-3.5 flex-shrink-0 cursor-pointer text-ink-gray-5"
+									:class="{ 'ml-1': isTemporal(element.data_type) }"
+									@click="removeFrom(columnsZone, element)"
 								/>
 							</div>
 						</template>
@@ -408,6 +560,12 @@ document.title = 'Explore | Insights'
 				>
 					{{ __('Pick a data source and table, then drag fields to explore') }}
 				</div>
+				<div
+					v-else-if="viewMode === 'chart' && chartOptions"
+					class="h-full min-h-80 w-full p-4"
+				>
+					<BaseChart class="h-full w-full" :options="chartOptions" />
+				</div>
 				<table v-else-if="results" class="w-full border-collapse text-p-sm">
 					<thead class="sticky top-0 bg-surface-gray-1">
 						<tr>
@@ -443,4 +601,25 @@ document.title = 'Explore | Insights'
 			</div>
 		</div>
 	</div>
+
+	<Dialog v-model="showSaveDialog" :options="{ title: __('Save to Workbook') }">
+		<template #body-content>
+			<FormControl
+				type="text"
+				v-model="saveTitle"
+				:label="__('Title')"
+				autocomplete="off"
+			/>
+			<div class="mt-4 flex justify-end">
+				<Button
+					variant="solid"
+					:loading="saving"
+					:disabled="!saveTitle"
+					@click="saveExploration()"
+				>
+					{{ __('Save') }}
+				</Button>
+			</div>
+		</template>
+	</Dialog>
 </template>
