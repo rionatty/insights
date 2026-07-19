@@ -168,6 +168,7 @@ scheduler_events = {
     ],
     "daily": [
         "insights.api.data_store.sync_tables",
+        "insights.insights.doctype.insights_report_schedule.insights_report_schedule.send_due_reports",
     ],
     "hourly": [
         "insights.api.data_store.update_failed_sync_status",

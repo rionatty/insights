@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-07-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "enabled",
+  "dashboard",
+  "column_break_a",
+  "frequency",
+  "day_of_week",
+  "day_of_month",
+  "section_break_b",
+  "recipients",
+  "last_sent_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "dashboard",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Dashboard",
+   "options": "Insights Dashboard v3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Weekly",
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Frequency",
+   "options": "Daily\nWeekly\nMonthly"
+  },
+  {
+   "default": "Monday",
+   "depends_on": "eval:doc.frequency == 'Weekly'",
+   "fieldname": "day_of_week",
+   "fieldtype": "Select",
+   "label": "Day of Week",
+   "options": "Monday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.frequency == 'Monthly'",
+   "fieldname": "day_of_month",
+   "fieldtype": "Int",
+   "label": "Day of Month"
+  },
+  {
+   "fieldname": "section_break_b",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "One email address per line (or comma separated)",
+   "fieldname": "recipients",
+   "fieldtype": "Small Text",
+   "label": "Recipients",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Last Sent On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Insights",
+ "name": "Insights Report Schedule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Insights Admin",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}
