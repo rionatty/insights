@@ -142,6 +142,70 @@
       ]
      }
     ]
+   },
+   "tq-sb1-deliv": {
+    "name": "tq-sb1-deliv",
+    "title": "Delivery Performance",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 4,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_DELIVERY_PERF"
+      }
+     }
+    ]
+   },
+   "tq-sb1-open-dlv": {
+    "name": "tq-sb1-open-dlv",
+    "title": "Open Deliveries",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 5,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "ODLN"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "CANCELED"
+        },
+        "operator": "=",
+        "value": "N"
+       },
+       {
+        "column": {
+         "type": "column",
+         "column_name": "DocStatus"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
    }
   },
   "charts": {
@@ -595,6 +659,212 @@
       "filters": []
      }
     }
+   },
+   "tc-sb1-ontime-kpi": {
+    "name": "tc-sb1-ontime-kpi",
+    "title": "On-Time Delivery Rate",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 9,
+    "query": "tq-sb1-deliv",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "On-Time Rate",
+       "column_name": "OnTimePct",
+       "data_type": "Decimal",
+       "aggregation": "avg"
+      }
+     ],
+     "number_column_options": [
+      {
+       "suffix": "%",
+       "decimal": 1,
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "negative_is_better": false,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DeliveryDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "DeliveryDate",
+      "column_name": "DeliveryDate",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-sb1-fulfill-kpi": {
+    "name": "tc-sb1-fulfill-kpi",
+    "title": "Avg Fulfillment Days",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 10,
+    "query": "tq-sb1-deliv",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Order to Delivery",
+       "column_name": "FulfillmentDays",
+       "data_type": "Integer",
+       "aggregation": "avg"
+      },
+      {
+       "measure_name": "Delay vs Promised",
+       "column_name": "DelayDays",
+       "data_type": "Integer",
+       "aggregation": "avg"
+      }
+     ],
+     "number_column_options": [
+      {
+       "suffix": " days",
+       "decimal": 0,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": " days",
+       "decimal": 0,
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "negative_is_better": true,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DeliveryDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "DeliveryDate",
+      "column_name": "DeliveryDate",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-sb1-open-dlv-kpi": {
+    "name": "tc-sb1-open-dlv-kpi",
+    "title": "Open Deliveries",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 11,
+    "query": "tq-sb1-open-dlv",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Open Amount",
+       "column_name": "DocTotal",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Deliveries",
+       "column_name": "DocEntry",
+       "data_type": "Integer",
+       "aggregation": "count"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "negative_is_better": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-rev-gp-yearly": {
+    "name": "tc-sb1-rev-gp-yearly",
+    "title": "Revenue vs Gross Profit by Year",
+    "workbook": "template-sap-sales",
+    "folder": null,
+    "sort_order": 12,
+    "query": "tq-sb1-inv-lines",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "DocDate",
+       "column_name": "DocDate",
+       "data_type": "Date",
+       "granularity": "year"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Revenue",
+         "column_name": "LineTotal",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       },
+       {
+        "measure": {
+         "measure_name": "Gross Profit",
+         "column_name": "GrssProfit",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "DocDate"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
    }
   },
   "dashboards": {
@@ -618,7 +888,9 @@
        "tc-sb1-top-customers": "`tq-sb1-inv`.`DocDate`",
        "tc-sb1-rev-by-whs": "`tq-sb1-inv-lines`.`DocDate`",
        "tc-sb1-top-items": "`tq-sb1-inv-lines`.`DocDate`",
-       "tc-sb1-gp-trend": "`tq-sb1-inv-lines`.`DocDate`"
+       "tc-sb1-gp-trend": "`tq-sb1-inv-lines`.`DocDate`",
+       "tc-sb1-ontime-kpi": "`tq-sb1-deliv`.`DeliveryDate`",
+       "tc-sb1-fulfill-kpi": "`tq-sb1-deliv`.`DeliveryDate`"
       },
       "layout": {
        "i": "filter-date",
@@ -674,11 +946,44 @@
      },
      {
       "type": "chart",
+      "chart": "tc-sb1-ontime-kpi",
+      "layout": {
+       "i": "item-tc-sb1-ontime-kpi",
+       "x": 0,
+       "y": 7,
+       "w": 6,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-fulfill-kpi",
+      "layout": {
+       "i": "item-tc-sb1-fulfill-kpi",
+       "x": 6,
+       "y": 7,
+       "w": 8,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-open-dlv-kpi",
+      "layout": {
+       "i": "item-tc-sb1-open-dlv-kpi",
+       "x": 14,
+       "y": 7,
+       "w": 6,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
       "chart": "tc-sb1-revenue-trend",
       "layout": {
        "i": "item-tc-sb1-revenue-trend",
        "x": 0,
-       "y": 7,
+       "y": 10,
        "w": 12,
        "h": 8
       }
@@ -689,7 +994,7 @@
       "layout": {
        "i": "item-tc-sb1-rev-by-whs",
        "x": 12,
-       "y": 7,
+       "y": 10,
        "w": 8,
        "h": 8
       }
@@ -700,7 +1005,7 @@
       "layout": {
        "i": "item-tc-sb1-top-customers",
        "x": 0,
-       "y": 15,
+       "y": 18,
        "w": 10,
        "h": 8
       }
@@ -711,7 +1016,7 @@
       "layout": {
        "i": "item-tc-sb1-top-items",
        "x": 10,
-       "y": 15,
+       "y": 18,
        "w": 10,
        "h": 8
       }
@@ -722,8 +1027,19 @@
       "layout": {
        "i": "item-tc-sb1-gp-trend",
        "x": 0,
-       "y": 23,
-       "w": 20,
+       "y": 26,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-rev-gp-yearly",
+      "layout": {
+       "i": "item-tc-sb1-rev-gp-yearly",
+       "x": 10,
+       "y": 26,
+       "w": 10,
        "h": 8
       }
      }

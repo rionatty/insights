@@ -185,6 +185,27 @@
       ]
      }
     ]
+   },
+   "tq-sb1-pvr": {
+    "name": "tq-sb1-pvr",
+    "title": "Purchases vs Returns Monthly",
+    "workbook": "template-sap-purchasing",
+    "folder": null,
+    "sort_order": 5,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_PURCHASE_VS_RETURNS_MONTHLY"
+      }
+     }
+    ]
    }
   },
   "charts": {
@@ -455,17 +476,17 @@
    },
    "tc-sb1-preturn-trend": {
     "name": "tc-sb1-preturn-trend",
-    "title": "Goods Return Trend",
+    "title": "Purchases vs Goods Returns",
     "workbook": "template-sap-purchasing",
     "folder": null,
     "sort_order": 5,
-    "query": "tq-sb1-preturns",
+    "query": "tq-sb1-pvr",
     "chart_type": "Line",
     "config": {
      "x_axis": {
       "dimension": {
-       "dimension_name": "DocDate",
-       "column_name": "DocDate",
+       "dimension_name": "MonthStart",
+       "column_name": "MonthStart",
        "data_type": "Date",
        "granularity": "month"
       }
@@ -474,8 +495,16 @@
       "series": [
        {
         "measure": {
-         "measure_name": "Return Value",
-         "column_name": "DocTotal",
+         "measure_name": "Purchases",
+         "column_name": "PurchaseAmount",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       },
+       {
+        "measure": {
+         "measure_name": "Returns",
+         "column_name": "ReturnAmount",
          "data_type": "Decimal",
          "aggregation": "sum"
         }
@@ -487,7 +516,7 @@
       {
        "column": {
         "type": "column",
-        "column_name": "DocDate"
+        "column_name": "MonthStart"
        },
        "direction": "asc"
       }
@@ -657,7 +686,7 @@
        "tc-sb1-purchase-kpis": "`tq-sb1-bills`.`DocDate`",
        "tc-sb1-preturn-kpi": "`tq-sb1-preturns`.`DocDate`",
        "tc-sb1-spend-trend": "`tq-sb1-bills`.`DocDate`",
-       "tc-sb1-preturn-trend": "`tq-sb1-preturns`.`DocDate`",
+       "tc-sb1-preturn-trend": "`tq-sb1-pvr`.`MonthStart`",
        "tc-sb1-top-suppliers": "`tq-sb1-bills`.`DocDate`",
        "tc-sb1-spend-by-item": "`tq-sb1-bill-lines`.`DocDate`"
       },

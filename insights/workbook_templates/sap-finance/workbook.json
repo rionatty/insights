@@ -246,6 +246,27 @@
       ]
      }
     ]
+   },
+   "tq-fin-ratios": {
+    "name": "tq-fin-ratios",
+    "title": "Ratio KPIs",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 8,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_KPI_SUMMARY"
+      }
+     }
+    ]
    }
   },
   "charts": {
@@ -797,6 +818,152 @@
       "filters": []
      }
     }
+   },
+   "tc-fin-margins": {
+    "name": "tc-fin-margins",
+    "title": "Margins & Returns",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 12,
+    "query": "tq-fin-ratios",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Gross Margin (YTD)",
+       "column_name": "GrossMarginYTD",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Net Margin (12M)",
+       "column_name": "NetMargin12M",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "ROE (12M)",
+       "column_name": "ROE",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Asset Turnover",
+       "column_name": "AssetTurnover12M",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "suffix": "%",
+       "decimal": 1,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": "%",
+       "decimal": 1,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": "%",
+       "decimal": 1,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": "x",
+       "decimal": 1,
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "negative_is_better": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-fin-cycle": {
+    "name": "tc-fin-cycle",
+    "title": "Working Capital & Cash Cycle",
+    "workbook": "template-sap-finance",
+    "folder": null,
+    "sort_order": 13,
+    "query": "tq-fin-ratios",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Working Capital",
+       "column_name": "WorkingCapital",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "DSO",
+       "column_name": "DSODays",
+       "data_type": "Integer",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "DIO",
+       "column_name": "DIODays",
+       "data_type": "Integer",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "DPO",
+       "column_name": "DPODays",
+       "data_type": "Integer",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Cash Cycle",
+       "column_name": "CCCDays",
+       "data_type": "Integer",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "suffix": " days",
+       "decimal": 0,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": " days",
+       "decimal": 0,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": " days",
+       "decimal": 0,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": " days",
+       "decimal": 0,
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "negative_is_better": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
    }
   },
   "dashboards": {
@@ -898,11 +1065,33 @@
      },
      {
       "type": "chart",
+      "chart": "tc-fin-margins",
+      "layout": {
+       "i": "item-tc-fin-margins",
+       "x": 0,
+       "y": 7,
+       "w": 20,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-fin-cycle",
+      "layout": {
+       "i": "item-tc-fin-cycle",
+       "x": 0,
+       "y": 10,
+       "w": 20,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
       "chart": "tc-fin-pnl-waterfall",
       "layout": {
        "i": "item-tc-fin-pnl-waterfall",
        "x": 0,
-       "y": 7,
+       "y": 13,
        "w": 10,
        "h": 8
       }
@@ -913,7 +1102,7 @@
       "layout": {
        "i": "item-tc-fin-pnl-trend",
        "x": 10,
-       "y": 7,
+       "y": 13,
        "w": 10,
        "h": 8
       }
@@ -924,7 +1113,7 @@
       "layout": {
        "i": "item-tc-fin-cash-trend",
        "x": 0,
-       "y": 15,
+       "y": 21,
        "w": 10,
        "h": 8
       }
@@ -935,7 +1124,7 @@
       "layout": {
        "i": "item-tc-fin-by-cc",
        "x": 10,
-       "y": 15,
+       "y": 21,
        "w": 10,
        "h": 8
       }
@@ -946,7 +1135,7 @@
       "layout": {
        "i": "item-tc-fin-top-expenses",
        "x": 0,
-       "y": 23,
+       "y": 29,
        "w": 10,
        "h": 8
       }
@@ -957,7 +1146,7 @@
       "layout": {
        "i": "item-tc-fin-balances",
        "x": 10,
-       "y": 23,
+       "y": 29,
        "w": 10,
        "h": 8
       }

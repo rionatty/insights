@@ -64,6 +64,83 @@
       ]
      }
     ]
+   },
+   "tq-sb1-opp-stages": {
+    "name": "tq-sb1-opp-stages",
+    "title": "Open Opportunities by Stage",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 2,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_OPP_STAGES"
+      }
+     },
+     {
+      "type": "filter_group",
+      "logical_operator": "And",
+      "filters": [
+       {
+        "column": {
+         "type": "column",
+         "column_name": "Status"
+        },
+        "operator": "=",
+        "value": "O"
+       }
+      ]
+     }
+    ]
+   },
+   "tq-sb1-activities": {
+    "name": "tq-sb1-activities",
+    "title": "Activities",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 3,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "OCLG"
+      }
+     }
+    ]
+   },
+   "tq-sb1-kpisum-crm": {
+    "name": "tq-sb1-kpisum-crm",
+    "title": "Ratio KPIs",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 4,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_KPI_SUMMARY"
+      }
+     }
+    ]
    }
   },
   "charts": {
@@ -120,12 +197,47 @@
      }
     }
    },
+   "tc-sb1-winrate-kpi": {
+    "name": "tc-sb1-winrate-kpi",
+    "title": "Opportunity Win Rate",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 1,
+    "query": "tq-sb1-kpisum-crm",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Win Rate",
+       "column_name": "OppWinRatePct",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "suffix": "%",
+       "decimal": 1,
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "negative_is_better": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
    "tc-sb1-opp-trend": {
     "name": "tc-sb1-opp-trend",
     "title": "Opportunities Opened per Month",
     "workbook": "template-sap-crm",
     "folder": null,
-    "sort_order": 1,
+    "sort_order": 2,
     "query": "tq-sb1-opps",
     "chart_type": "Line",
     "config": {
@@ -171,7 +283,7 @@
     "title": "Won / Lost / Open",
     "workbook": "template-sap-crm",
     "folder": null,
-    "sort_order": 2,
+    "sort_order": 3,
     "query": "tq-sb1-opps",
     "chart_type": "Donut",
     "config": {
@@ -195,12 +307,56 @@
      }
     }
    },
+   "tc-sb1-opp-by-stage": {
+    "name": "tc-sb1-opp-by-stage",
+    "title": "Open Potential by Stage",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 4,
+    "query": "tq-sb1-opp-stages",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "StageName",
+       "column_name": "StageName",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Potential Amount",
+         "column_name": "PotentialAmount",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Potential Amount"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
    "tc-sb1-top-opps": {
     "name": "tc-sb1-top-opps",
     "title": "Top Customers by Open Potential",
     "workbook": "template-sap-crm",
     "folder": null,
-    "sort_order": 3,
+    "sort_order": 5,
     "query": "tq-sb1-open-opps",
     "chart_type": "Row",
     "config": {
@@ -228,6 +384,50 @@
        "column": {
         "type": "column",
         "column_name": "Potential Amount"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-top-visited": {
+    "name": "tc-sb1-top-visited",
+    "title": "Most Contacted Customers",
+    "workbook": "template-sap-crm",
+    "folder": null,
+    "sort_order": 6,
+    "query": "tq-sb1-activities",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "CardCode",
+       "column_name": "CardCode",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Activities",
+         "column_name": "ClgCode",
+         "data_type": "Integer",
+         "aggregation": "count"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Activities"
        },
        "direction": "desc"
       }
@@ -272,7 +472,18 @@
        "i": "item-tc-sb1-opp-kpis",
        "x": 0,
        "y": 1,
-       "w": 20,
+       "w": 15,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-winrate-kpi",
+      "layout": {
+       "i": "item-tc-sb1-winrate-kpi",
+       "x": 15,
+       "y": 1,
+       "w": 5,
        "h": 3
       }
      },
@@ -300,11 +511,33 @@
      },
      {
       "type": "chart",
+      "chart": "tc-sb1-opp-by-stage",
+      "layout": {
+       "i": "item-tc-sb1-opp-by-stage",
+       "x": 0,
+       "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
       "chart": "tc-sb1-top-opps",
       "layout": {
        "i": "item-tc-sb1-top-opps",
-       "x": 0,
+       "x": 10,
        "y": 12,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-top-visited",
+      "layout": {
+       "i": "item-tc-sb1-top-visited",
+       "x": 0,
+       "y": 20,
        "w": 20,
        "h": 8
       }

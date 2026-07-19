@@ -2,7 +2,7 @@
  "version": 1,
  "title": "Sales Opportunities",
  "description": "The CRM pipeline at a glance \u2014 open pipeline value (potential and weighted), win/loss split, opportunities opened per month and the customers with the most on the table.",
- "notes": "Built from Sales Opportunities (OOPR). Status codes: O = open, W = won, L = lost. Potential uses MaxSumLoc (local currency); Weighted uses WtSumLoc (potential x closing probability).",
+ "notes": "Built from Sales Opportunities (OOPR) and Activities (OCLG). Status codes: O = open, W = won, L = lost. Potential uses MaxSumLoc (local currency); Weighted uses WtSumLoc (potential x closing probability). The stage chart and win rate require the CVT_OPP_STAGES and CVT_KPI_SUMMARY views (run scripts/sap_b1_finance_views.sql first).",
  "module": "CRM",
  "required_apps": [],
  "source_doctypes": [],

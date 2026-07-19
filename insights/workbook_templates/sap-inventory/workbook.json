@@ -149,6 +149,69 @@
       ]
      }
     ]
+   },
+   "tq-sb1-stock-value": {
+    "name": "tq-sb1-stock-value",
+    "title": "Stock Value",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 5,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_STOCK_VALUE"
+      }
+     }
+    ]
+   },
+   "tq-sb1-move-monthly": {
+    "name": "tq-sb1-move-monthly",
+    "title": "Stock In vs Out Monthly",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 6,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_STOCK_MOVEMENT_MONTHLY"
+      }
+     }
+    ]
+   },
+   "tq-sb1-kpisum-inv": {
+    "name": "tq-sb1-kpisum-inv",
+    "title": "Ratio KPIs",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 7,
+    "use_live_connection": 1,
+    "is_script_query": 0,
+    "is_builder_query": 1,
+    "is_native_query": 0,
+    "operations": [
+     {
+      "type": "source",
+      "table": {
+       "type": "table",
+       "data_source": "SAP B1",
+       "table_name": "CVT_KPI_SUMMARY"
+      }
+     }
+    ]
    }
   },
   "charts": {
@@ -421,13 +484,13 @@
     "workbook": "template-sap-inventory",
     "folder": null,
     "sort_order": 6,
-    "query": "tq-sb1-moves",
+    "query": "tq-sb1-stock-value",
     "chart_type": "Number",
     "config": {
      "number_columns": [
       {
        "measure_name": "Stock Value",
-       "column_name": "TransValue",
+       "column_name": "StockValue",
        "data_type": "Decimal",
        "aggregation": "sum"
       }
@@ -525,6 +588,252 @@
       "filters": []
      }
     }
+   },
+   "tc-sb1-turnover-kpi": {
+    "name": "tc-sb1-turnover-kpi",
+    "title": "Stock Turnover (12M)",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 9,
+    "query": "tq-sb1-kpisum-inv",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Turnover",
+       "column_name": "StockTurnover12M",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Days of Inventory",
+       "column_name": "DIODays",
+       "data_type": "Integer",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "suffix": "x",
+       "decimal": 1,
+       "shorten_numbers": false
+      },
+      {
+       "suffix": " days",
+       "decimal": 0,
+       "shorten_numbers": false
+      }
+     ],
+     "comparison": false,
+     "sparkline": false,
+     "negative_is_better": false,
+     "order_by": [],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-inout-kpi": {
+    "name": "tc-sb1-inout-kpi",
+    "title": "Stock In vs Out Value",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 10,
+    "query": "tq-sb1-move-monthly",
+    "chart_type": "Number",
+    "config": {
+     "number_columns": [
+      {
+       "measure_name": "Inbound Value",
+       "column_name": "InValue",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      },
+      {
+       "measure_name": "Outbound Value",
+       "column_name": "OutValue",
+       "data_type": "Decimal",
+       "aggregation": "sum"
+      }
+     ],
+     "number_column_options": [
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      },
+      {
+       "decimal": 0,
+       "shorten_numbers": true
+      }
+     ],
+     "comparison": true,
+     "sparkline": true,
+     "negative_is_better": false,
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "MonthStart"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     },
+     "date_column": {
+      "dimension_name": "MonthStart",
+      "column_name": "MonthStart",
+      "data_type": "Date",
+      "granularity": "month"
+     }
+    }
+   },
+   "tc-sb1-value-by-group": {
+    "name": "tc-sb1-value-by-group",
+    "title": "Top Item Groups by Stock Value",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 11,
+    "query": "tq-sb1-stock-value",
+    "chart_type": "Row",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "ItemGroup",
+       "column_name": "ItemGroup",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Stock Value",
+         "column_name": "StockValue",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Stock Value"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 10,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-value-by-whs": {
+    "name": "tc-sb1-value-by-whs",
+    "title": "Stock Value by Warehouse",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 12,
+    "query": "tq-sb1-stock-value",
+    "chart_type": "Bar",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "WhsCode",
+       "column_name": "WhsCode",
+       "data_type": "String"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Stock Value",
+         "column_name": "StockValue",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ]
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "Stock Value"
+       },
+       "direction": "desc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
+   },
+   "tc-sb1-inout-trend": {
+    "name": "tc-sb1-inout-trend",
+    "title": "Inbound vs Outbound Value",
+    "workbook": "template-sap-inventory",
+    "folder": null,
+    "sort_order": 13,
+    "query": "tq-sb1-move-monthly",
+    "chart_type": "Line",
+    "config": {
+     "x_axis": {
+      "dimension": {
+       "dimension_name": "MonthStart",
+       "column_name": "MonthStart",
+       "data_type": "Date",
+       "granularity": "month"
+      }
+     },
+     "y_axis": {
+      "series": [
+       {
+        "measure": {
+         "measure_name": "Inbound",
+         "column_name": "InValue",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       },
+       {
+        "measure": {
+         "measure_name": "Outbound",
+         "column_name": "OutValue",
+         "data_type": "Decimal",
+         "aggregation": "sum"
+        }
+       }
+      ],
+      "show_data_labels": false
+     },
+     "order_by": [
+      {
+       "column": {
+        "type": "column",
+        "column_name": "MonthStart"
+       },
+       "direction": "asc"
+      }
+     ],
+     "limit": 100,
+     "filters": {
+      "logical_operator": "And",
+      "filters": []
+     }
+    }
    }
   },
   "dashboards": {
@@ -543,7 +852,9 @@
       "links": {
        "tc-sb1-move-trend": "`tq-sb1-moves`.`DocDate`",
        "tc-sb1-value-moved": "`tq-sb1-moves`.`DocDate`",
-       "tc-sb1-out-by-whs": "`tq-sb1-moves`.`DocDate`"
+       "tc-sb1-out-by-whs": "`tq-sb1-moves`.`DocDate`",
+       "tc-sb1-inout-kpi": "`tq-sb1-move-monthly`.`MonthStart`",
+       "tc-sb1-inout-trend": "`tq-sb1-move-monthly`.`MonthStart`"
       },
       "layout": {
        "i": "filter-date",
@@ -560,7 +871,7 @@
        "i": "item-tc-sb1-stock-kpis",
        "x": 0,
        "y": 1,
-       "w": 8,
+       "w": 6,
        "h": 3
       }
      },
@@ -569,9 +880,20 @@
       "chart": "tc-sb1-stockvalue-kpi",
       "layout": {
        "i": "item-tc-sb1-stockvalue-kpi",
-       "x": 8,
+       "x": 6,
        "y": 1,
-       "w": 5,
+       "w": 4,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-turnover-kpi",
+      "layout": {
+       "i": "item-tc-sb1-turnover-kpi",
+       "x": 10,
+       "y": 1,
+       "w": 4,
        "h": 3
       }
      },
@@ -580,9 +902,9 @@
       "chart": "tc-sb1-oos-kpi",
       "layout": {
        "i": "item-tc-sb1-oos-kpi",
-       "x": 13,
+       "x": 14,
        "y": 1,
-       "w": 4,
+       "w": 3,
        "h": 3
       }
      },
@@ -599,11 +921,22 @@
      },
      {
       "type": "chart",
+      "chart": "tc-sb1-inout-kpi",
+      "layout": {
+       "i": "item-tc-sb1-inout-kpi",
+       "x": 0,
+       "y": 4,
+       "w": 20,
+       "h": 3
+      }
+     },
+     {
+      "type": "chart",
       "chart": "tc-sb1-move-trend",
       "layout": {
        "i": "item-tc-sb1-move-trend",
        "x": 0,
-       "y": 4,
+       "y": 7,
        "w": 12,
        "h": 8
       }
@@ -614,8 +947,30 @@
       "layout": {
        "i": "item-tc-sb1-stock-by-whs",
        "x": 12,
-       "y": 4,
+       "y": 7,
        "w": 8,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-value-by-group",
+      "layout": {
+       "i": "item-tc-sb1-value-by-group",
+       "x": 0,
+       "y": 15,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-value-by-whs",
+      "layout": {
+       "i": "item-tc-sb1-value-by-whs",
+       "x": 10,
+       "y": 15,
+       "w": 10,
        "h": 8
       }
      },
@@ -625,7 +980,7 @@
       "layout": {
        "i": "item-tc-sb1-top-holdings",
        "x": 0,
-       "y": 12,
+       "y": 23,
        "w": 10,
        "h": 8
       }
@@ -636,7 +991,18 @@
       "layout": {
        "i": "item-tc-sb1-value-moved",
        "x": 10,
-       "y": 12,
+       "y": 23,
+       "w": 10,
+       "h": 8
+      }
+     },
+     {
+      "type": "chart",
+      "chart": "tc-sb1-inout-trend",
+      "layout": {
+       "i": "item-tc-sb1-inout-trend",
+       "x": 0,
+       "y": 31,
        "w": 10,
        "h": 8
       }
@@ -646,9 +1012,9 @@
       "chart": "tc-sb1-out-by-whs",
       "layout": {
        "i": "item-tc-sb1-out-by-whs",
-       "x": 0,
-       "y": 20,
-       "w": 20,
+       "x": 10,
+       "y": 31,
+       "w": 10,
        "h": 8
       }
      }

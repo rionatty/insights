@@ -2,7 +2,7 @@
  "version": 1,
  "title": "Purchasing Overview",
  "description": "Supplier spend and order pipeline \u2014 spend trend with month-on-month KPIs, top suppliers and items, and the open purchase order backlog.",
- "notes": "Built from posted AP Invoices (OPCH/PCH1), open Purchase Orders (OPOR), open Goods Receipt POs (OPDN) and Goods Returns (ORPD), cancelled documents excluded.",
+ "notes": "Built from posted AP Invoices (OPCH/PCH1), open Purchase Orders (OPOR), open Goods Receipt POs (OPDN) and Goods Returns (ORPD), cancelled documents excluded. The purchases-vs-returns chart requires the CVT_PURCHASE_VS_RETURNS_MONTHLY view (run scripts/sap_b1_finance_views.sql first).",
  "module": "Buying",
  "required_apps": [],
  "source_doctypes": [],
