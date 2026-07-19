@@ -12,6 +12,7 @@ import {
 	Save,
 	Sigma,
 	SlidersHorizontal,
+	Sparkles,
 	Table2,
 	Type,
 	X,
@@ -227,6 +228,7 @@ const running = ref(false)
 async function runExploration() {
 	if (!selectedTable.value) return
 	running.value = true
+	aiSQL.value = ''
 	try {
 		results.value = await call('insights.api.explore.run_exploration', {
 			operations: JSON.stringify(buildOperations()),
@@ -236,6 +238,33 @@ async function runExploration() {
 		showErrorToast(e)
 	} finally {
 		running.value = false
+	}
+}
+
+// ---- ask the AI ----
+const question = ref('')
+const asking = ref(false)
+const aiSQL = ref('')
+
+async function askAI() {
+	if (!selectedSource.value || !question.value.trim()) return
+	asking.value = true
+	try {
+		const response = await call('insights.api.ai.ask', {
+			data_source: selectedSource.value,
+			question: question.value,
+		})
+		aiSQL.value = response.sql
+		results.value = {
+			columns: response.columns,
+			rows: response.rows,
+			time_taken: response.time_taken,
+		}
+		viewMode.value = 'table'
+	} catch (e: any) {
+		showErrorToast(e)
+	} finally {
+		asking.value = false
 	}
 }
 
@@ -552,10 +581,33 @@ document.title = 'Explore | Insights'
 				</div>
 			</div>
 
+			<!-- ask the AI -->
+			<div v-if="selectedSource" class="flex items-center gap-2 border-b px-3 py-2">
+				<Sparkles class="h-4 w-4 flex-shrink-0 text-ink-gray-5" />
+				<input
+					v-model="question"
+					type="text"
+					class="flex-1 border-0 bg-transparent text-p-sm text-ink-gray-8 outline-none placeholder:text-ink-gray-4 focus:ring-0"
+					:placeholder="
+						__('Ask in plain English — e.g. total revenue by customer this year')
+					"
+					@keydown.enter="askAI()"
+				/>
+				<Button variant="subtle" :loading="asking" :disabled="!question.trim()" @click="askAI()">
+					{{ __('Ask') }}
+				</Button>
+			</div>
+			<div
+				v-if="aiSQL"
+				class="border-b bg-surface-gray-1 px-3 py-2 font-mono text-p-sm text-ink-gray-6"
+			>
+				{{ aiSQL }}
+			</div>
+
 			<!-- results -->
 			<div class="flex-1 overflow-auto">
 				<div
-					v-if="!selectedTable"
+					v-if="!selectedTable && !aiSQL"
 					class="flex h-full items-center justify-center text-ink-gray-5"
 				>
 					{{ __('Pick a data source and table, then drag fields to explore') }}
