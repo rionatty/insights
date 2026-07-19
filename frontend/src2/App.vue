@@ -1,10 +1,10 @@
 <template>
 	<div class="flex h-screen w-screen overflow-hidden bg-white text-base antialiased">
-		<div v-if="!hideSidebar" class="fiori-shell h-full border-r">
+		<div v-if="!hideSidebar" class="fiori-shell h-full border-r bg-gray-50">
 			<AppSidebar />
 		</div>
 
-		<div class="flex h-full flex-1 flex-col overflow-auto">
+		<div class="fiori-content flex h-full flex-1 flex-col overflow-auto">
 			<Suspense>
 				<RouterView />
 			</Suspense>

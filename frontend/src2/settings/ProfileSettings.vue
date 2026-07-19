@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { Avatar } from 'frappe-ui'
 import session from '../session'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import Checkbox from '../components/Checkbox.vue'
+import SettingItem from './SettingItem.vue'
+import { fioriThemeEnabled, saveFioriTheme } from '../theme'
 import useUserStore from '../users/users'
 
 const user = ref({ ...session.user })
@@ -11,6 +14,14 @@ const updateDisabled = computed(() => {
 		user.value.first_name === session.user.first_name &&
 		user.value.last_name === session.user.last_name
 	)
+})
+
+// per-user appearance preference; persisted server-side so it follows
+// the user across devices
+const fioriTheme = ref(fioriThemeEnabled.value)
+watch(fioriThemeEnabled, (v) => (fioriTheme.value = v))
+watch(fioriTheme, (v) => {
+	if (v !== fioriThemeEnabled.value) saveFioriTheme(Boolean(v))
 })
 
 const userStore = useUserStore()
@@ -82,5 +93,13 @@ function update() {
 				/>
 			</div>
 		</div>
+
+		<h1 class="mt-2 text-xl font-semibold">Appearance</h1>
+		<SettingItem
+			label="SAP Fiori Theme"
+			description="Dark cockpit-style dashboards, Fiori shell sidebars and the SAP chart palette — like the SAP Business One Web Client. Applies only to you; reload the page to restyle charts that are already open."
+		>
+			<Checkbox v-model="fioriTheme" />
+		</SettingItem>
 	</div>
 </template>

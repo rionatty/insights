@@ -124,8 +124,8 @@ function onDoubleClick(measure_name: string) {
 						:class="
 							!color && config.comparison
 								? favorable
-									? 'text-green-600'
-									: 'text-red-600'
+									? 'kpi-favorable'
+									: 'kpi-unfavorable'
 								: ''
 						"
 						:style="color && typeof color === 'string' ? { color: color } : {}"

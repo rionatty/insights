@@ -22,7 +22,7 @@ const activeQueryName = computed(() => {
 <template>
 	<div
 		v-if="workbook"
-		class="fiori-shell relative flex h-full w-[17rem] flex-shrink-0 flex-col overflow-y-auto"
+		class="fiori-shell relative flex h-full w-[17rem] flex-shrink-0 flex-col overflow-y-auto bg-white"
 	>
 		<WorkbookSidebarFolders
 			v-bind="{

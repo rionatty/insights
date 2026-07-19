@@ -257,3 +257,19 @@ def update_user(email: str, fields: dict):
         user.last_name = last_name
 
     user.save()
+
+
+@insights_whitelist()
+def get_user_preferences():
+    """Per-user UI preferences, stored in user defaults."""
+    return {
+        "fiori_theme": frappe.defaults.get_user_default("insights_fiori_theme") == "1",
+    }
+
+
+@insights_whitelist()
+def set_fiori_theme(enabled: int):
+    """Enable or disable the SAP Fiori theme for the current user."""
+    frappe.defaults.set_user_default(
+        "insights_fiori_theme", "1" if frappe.utils.cint(enabled) else "0"
+    )

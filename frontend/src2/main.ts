@@ -10,6 +10,7 @@ import router from './router.ts'
 import { translationPlugin } from './translation.ts'
 import telemetryPlugin from './telemetry'
 import session from './session.ts'
+import { loadFioriTheme } from './theme.ts'
 
 setConfig('resourceFetcher', frappeRequest)
 
@@ -25,6 +26,7 @@ app.component('grid-item', GridItem)
 const stop = watchEffect(() => {
 	if (session.isLoggedIn) {
 		app.use(telemetryPlugin, { app_name: 'insights' })
+		loadFioriTheme()
 		stop()
 	}
 })

@@ -17,9 +17,7 @@ provide('dashboard', dashboard)
 
 <template>
 	<div class="relative flex h-full w-full overflow-hidden">
-		<div
-			class="flex-1 overflow-y-auto bg-gradient-to-br from-[#3F5B77] via-[#35506C] to-[#2A3F55] p-4"
-		>
+		<div class="fiori-canvas flex-1 overflow-y-auto p-4">
 			<VueGridLayout
 				v-if="dashboard.doc.items.length > 0"
 				class="h-fit w-full"

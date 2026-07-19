@@ -65,51 +65,84 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
- * SAP Fiori shell theme: dark slate sidebar matching the B1 Web Client.
- * Applied via the .fiori-shell class on the sidebar container (App.vue);
- * the rules below invert the gray utility classes used by the components
- * inside it so the sidebar itself needs no per-component changes.
+ * SAP Fiori theme, per-user opt-in (Settings -> Profile -> Appearance).
+ * Enabling adds `fiori-theme` to <html> (see theme.ts); everything below is
+ * inert without it. Marker classes in components: .fiori-shell (sidebars),
+ * .fiori-canvas (dashboard grids), .fiori-content (main content area).
  * ------------------------------------------------------------------------ */
-.fiori-shell {
+
+/* -- shell: dark slate sidebars matching the B1 Web Client ---------------- */
+.fiori-theme .fiori-shell {
 	background: linear-gradient(180deg, #354a5f 0%, #2e4256 100%);
 	border-color: #26374a !important;
 }
 
-.fiori-shell .text-gray-900,
-.fiori-shell .text-gray-800,
-.fiori-shell .text-gray-700 {
+.fiori-theme .fiori-shell .text-gray-900,
+.fiori-theme .fiori-shell .text-gray-800,
+.fiori-theme .fiori-shell .text-gray-700 {
 	color: #e2e9f0 !important;
 }
 
-.fiori-shell .text-gray-600,
-.fiori-shell .text-gray-500 {
+.fiori-theme .fiori-shell .text-gray-600,
+.fiori-theme .fiori-shell .text-gray-500 {
 	color: #a9bccd !important;
 }
 
 /* active nav item: translucent white pill with light text */
-.fiori-shell .bg-white {
+.fiori-theme .fiori-shell .bg-white {
 	background-color: rgba(255, 255, 255, 0.14) !important;
 }
 
-.fiori-shell .shadow-sm {
+.fiori-theme .fiori-shell .shadow-sm {
 	box-shadow: none !important;
 }
 
-.fiori-shell .bg-gray-50,
-.fiori-shell .bg-gray-100,
-.fiori-shell .bg-gray-200 {
+.fiori-theme .fiori-shell .bg-gray-50,
+.fiori-theme .fiori-shell .bg-gray-100,
+.fiori-theme .fiori-shell .bg-gray-200 {
 	background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.fiori-shell .hover\:bg-gray-100:hover,
-.fiori-shell .hover\:bg-gray-200:hover,
-.fiori-shell .hover\:bg-white:hover {
+.fiori-theme .fiori-shell .hover\:bg-gray-100:hover,
+.fiori-theme .fiori-shell .hover\:bg-gray-200:hover,
+.fiori-theme .fiori-shell .hover\:bg-white:hover {
 	background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.fiori-shell .border,
-.fiori-shell .border-b,
-.fiori-shell .border-t,
-.fiori-shell .border-r {
+.fiori-theme .fiori-shell .border,
+.fiori-theme .fiori-shell .border-b,
+.fiori-theme .fiori-shell .border-t,
+.fiori-theme .fiori-shell .border-r {
 	border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* -- dashboards: dark cockpit canvas, white cards pop ---------------------- */
+.fiori-theme .fiori-canvas {
+	background: linear-gradient(135deg, #3f5b77 0%, #35506c 55%, #2a3f55 100%);
+	padding: 1rem !important;
+}
+
+/* -- content area: Fiori light-gray behind working screens ----------------- */
+.fiori-theme .fiori-content {
+	background-color: #f4f5f6;
+}
+
+/* -- accent: Fiori blue primary buttons ------------------------------------ */
+.fiori-theme button.bg-gray-900,
+.fiori-theme button.bg-surface-gray-7 {
+	background-color: #0070f2 !important;
+}
+
+.fiori-theme button.hover\:bg-gray-800:hover,
+.fiori-theme button.hover\:bg-surface-gray-6:hover {
+	background-color: #0064d8 !important;
+}
+
+/* -- KPI tiles: value colored by favorable/unfavorable movement ------------ */
+.fiori-theme .kpi-favorable {
+	color: #16a34a;
+}
+
+.fiori-theme .kpi-unfavorable {
+	color: #dc2626;
 }
