@@ -126,10 +126,26 @@ def ask_ollama(question: str, system: str, model: str | None = None) -> str:
     return response.json()["choices"][0]["message"]["content"]
 
 
-def build_schema_context(data_source: str, max_tables: int = 10) -> str:
-    """Compact schema description for the prompt. Views first — the curated
-    semantic layer — then tables; cached because reading remote schemas is
-    slow. Stored procedures are excluded (not directly queryable)."""
+def _table_priority(t) -> tuple:
+    """Curated semantic-layer views first (CVT_*, V_*), then other custom
+    views, then base tables. SAP B1's built-in B1_* system views last —
+    they crowd out the useful schema and mislead the model."""
+    name = (t.table or "").upper()
+    if name.startswith(("CVT_", "V_")):
+        rank = 0
+    elif t.object_type == "View" and not name.startswith("B1_"):
+        rank = 1
+    elif t.object_type != "View":
+        rank = 2
+    else:
+        rank = 3
+    return (rank, name)
+
+
+def build_schema_context(data_source: str, max_tables: int = 15) -> str:
+    """Compact schema description for the prompt, prioritized so the curated
+    semantic layer wins the table budget; cached because reading remote
+    schemas is slow. Stored procedures are excluded (not directly queryable)."""
 
     def _build():
         ds = frappe.get_doc("Insights Data Source v3", data_source)
@@ -137,12 +153,10 @@ def build_schema_context(data_source: str, max_tables: int = 10) -> str:
             "Insights Table v3",
             filters={"data_source": data_source},
             fields=["table", "object_type"],
-            order_by="object_type desc, table asc",  # View > Table alphabetically
             limit=500,
         )
         tables = [t for t in tables if not t.table.startswith("sp:")]
-        # views first, then tables, capped to keep the prompt small
-        tables = sorted(tables, key=lambda t: 0 if t.object_type == "View" else 1)
+        tables = sorted(tables, key=_table_priority)
         tables = tables[:max_tables]
 
         lines = []
@@ -156,7 +170,7 @@ def build_schema_context(data_source: str, max_tables: int = 10) -> str:
                     continue
         return "\n".join(lines)
 
-    cache_key = f"insights_ai_schema:{data_source}"
+    cache_key = f"insights_ai_schema_v2:{data_source}"
     cached = frappe.cache.get_value(cache_key)
     if cached:
         return cached
