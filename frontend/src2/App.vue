@@ -1,6 +1,6 @@
 <template>
 	<div class="flex h-screen w-screen overflow-hidden bg-white text-base antialiased">
-		<div v-if="!hideSidebar" class="h-full border-r bg-gray-50">
+		<div v-if="!hideSidebar" class="fiori-shell h-full border-r">
 			<AppSidebar />
 		</div>
 

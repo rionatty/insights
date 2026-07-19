@@ -63,3 +63,53 @@ body {
 .lucide {
 	stroke-width: 1.5;
 }
+
+/* ---------------------------------------------------------------------------
+ * SAP Fiori shell theme: dark slate sidebar matching the B1 Web Client.
+ * Applied via the .fiori-shell class on the sidebar container (App.vue);
+ * the rules below invert the gray utility classes used by the components
+ * inside it so the sidebar itself needs no per-component changes.
+ * ------------------------------------------------------------------------ */
+.fiori-shell {
+	background: linear-gradient(180deg, #354a5f 0%, #2e4256 100%);
+	border-color: #26374a !important;
+}
+
+.fiori-shell .text-gray-900,
+.fiori-shell .text-gray-800,
+.fiori-shell .text-gray-700 {
+	color: #e2e9f0 !important;
+}
+
+.fiori-shell .text-gray-600,
+.fiori-shell .text-gray-500 {
+	color: #a9bccd !important;
+}
+
+/* active nav item: translucent white pill with light text */
+.fiori-shell .bg-white {
+	background-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.fiori-shell .shadow-sm {
+	box-shadow: none !important;
+}
+
+.fiori-shell .bg-gray-50,
+.fiori-shell .bg-gray-100,
+.fiori-shell .bg-gray-200 {
+	background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fiori-shell .hover\:bg-gray-100:hover,
+.fiori-shell .hover\:bg-gray-200:hover,
+.fiori-shell .hover\:bg-white:hover {
+	background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.fiori-shell .border,
+.fiori-shell .border-b,
+.fiori-shell .border-t,
+.fiori-shell .border-r {
+	border-color: rgba(255, 255, 255, 0.12) !important;
+}
