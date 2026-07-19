@@ -277,7 +277,12 @@ async function askAI() {
 			question: question.value,
 		})
 		analysisText.value = ''
-		aiSQL.value = response.sql
+		aiSQL.value = response.sql || ''
+		if (response.error) {
+			// keep the generated SQL visible so the user can see what failed
+			createToast({ title: __('AI query failed'), message: response.error, variant: 'error' })
+			return
+		}
 		results.value = {
 			columns: response.columns,
 			rows: response.rows,

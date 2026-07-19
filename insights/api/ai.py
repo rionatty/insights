@@ -24,8 +24,14 @@ SYSTEM_PROMPT = """You are a SQL analyst. Write a single {dialect} SELECT statem
 
 Rules:
 - Output ONLY the SQL inside a ```sql code fence, nothing else.
-- A single SELECT (or WITH ... SELECT) statement. Never modify data.
+- Exactly ONE SELECT (or WITH ... SELECT) statement — never two. When the
+  question has multiple parts, answer all parts in one result set: GROUP BY
+  the relevant dimensions, or UNION ALL labeled subqueries.
+- Never modify data.
+- Today is {today}. When a month is named without a year, use the most
+  recent occurrence of that month.
 - Limit results to at most 100 rows unless the question implies fewer.
+- Prefer the CVT_* views when they cover the question.
 - Use only these tables and columns:
 
 {schema}"""
@@ -176,7 +182,9 @@ def build_schema_context(data_source: str, max_tables: int = 15, max_columns: in
                     continue
         return "\n".join(lines)
 
-    cache_key = f"insights_ai_schema_v3:{data_source}"
+    # bump the version suffix whenever the semantic layer changes shape so
+    # deployed sites pick up the new columns without waiting out the TTL
+    cache_key = f"insights_ai_schema_v4:{data_source}"
     cached = frappe.cache.get_value(cache_key)
     if cached:
         return cached
@@ -193,13 +201,19 @@ def extract_sql(content: str) -> str:
     return sql
 
 
-def validate_sql(sql: str) -> None:
+def validate_sql(sql: str) -> str | None:
+    """Return a user-facing error message when the SQL must not run, else None."""
+    statements = [s for s in sql.split(";") if s.strip()]
+    if len(statements) > 1:
+        return (
+            f"The AI answered with {len(statements)} separate queries, but only one can run. "
+            "Rephrase as a single question, or ask each part separately."
+        )
     if not re.match(r"^\s*(select|with)\b", sql, re.IGNORECASE):
-        frappe.throw("The generated query is not a SELECT statement; refusing to run it.")
-    if ";" in sql:
-        frappe.throw("Multiple statements are not allowed.")
+        return "The generated query is not a SELECT statement; refusing to run it."
     if FORBIDDEN_SQL.search(sql):
-        frappe.throw("The generated query contains a forbidden statement; refusing to run it.")
+        return "The generated query contains a forbidden statement; refusing to run it."
+    return None
 
 
 @insights_whitelist()
@@ -219,19 +233,28 @@ def ask(data_source: str, question: str):
     if not schema:
         frappe.throw("Could not read any table schemas for this data source")
 
-    system = SYSTEM_PROMPT.format(dialect=dialect, schema=schema)
+    system = SYSTEM_PROMPT.format(
+        dialect=dialect, schema=schema, today=frappe.utils.nowdate()
+    )
     if frappe.conf.get("anthropic_api_key"):
         content = ask_claude(question, system)
     else:
         content = ask_ollama(question, system)
 
     sql = extract_sql(content)
-    validate_sql(sql)
+    # return the SQL alongside any failure so the user can see what the
+    # model wrote instead of a bare error toast
+    error = validate_sql(sql)
+    if error:
+        return {"sql": sql, "error": error}
 
     with db_connections():
         backend = ds._get_ibis_backend()
-        query = backend.sql(sql)
-        results, time_taken = execute_ibis_query(query, page_size=200, cache=False)
+        try:
+            query = backend.sql(sql)
+            results, time_taken = execute_ibis_query(query, page_size=200, cache=False)
+        except Exception as e:
+            return {"sql": sql, "error": f"The generated SQL failed to run: {e}"}
 
     return {
         "sql": sql,
