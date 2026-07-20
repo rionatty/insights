@@ -486,3 +486,52 @@ def get_schema(data_source: str):
             )
 
     return schema
+
+
+@insights_whitelist(role="Insights Admin")
+def setup_sap_b1_views(data_source: str):
+    """Create or refresh the CVT_* SAP B1 analysis views on the data source's
+    own database by running scripts/sap_b1_finance_views.sql through the
+    existing connection — no SSMS needed. Safe to re-run: the script drops and
+    recreates each view. The connection user needs CREATE VIEW permission."""
+    import os
+    import re
+
+    from insights.insights.doctype.insights_data_source_v3.insights_data_source_v3 import (
+        db_connections,
+    )
+
+    doc = frappe.get_doc("Insights Data Source v3", data_source)
+    if doc.database_type != "MSSQL":
+        frappe.throw(f"{data_source} is not a SQL Server data source")
+
+    script_path = os.path.join(
+        frappe.get_app_path("insights"), "..", "scripts", "sap_b1_finance_views.sql"
+    )
+    with open(script_path) as f:
+        script = f.read()
+
+    # split on GO batch separators; each DROP/CREATE runs as its own batch
+    batches = [b.strip() for b in re.split(r"^\s*GO\s*$", script, flags=re.M | re.I) if b.strip()]
+
+    created, errors = [], []
+    with db_connections():
+        backend = doc._get_ibis_backend()
+        con = backend.con  # pyodbc connection under the ibis mssql backend
+        cursor = con.cursor()
+        for batch in batches:
+            match = re.search(r"CREATE (?:OR ALTER )?VIEW dbo\.(\w+)", batch)
+            try:
+                cursor.execute(batch)
+                con.commit()
+                if match:
+                    created.append(match.group(1))
+            except Exception as e:
+                con.rollback()
+                errors.append(f"{match.group(1) if match else batch[:60]}: {e}")
+
+    # surface the new views in the catalog right away
+    if created:
+        doc.update_table_list(force=True)
+
+    return {"views_created": created, "errors": errors}
