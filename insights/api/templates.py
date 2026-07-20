@@ -459,18 +459,27 @@ def update_workbook_from_template(template_name: str) -> dict:
             )
         )
 
-    workbook_name = _find_imported_workbook(template_name)
-    if not workbook_name:
+    # update every copy tagged with this template, not just the oldest: if a
+    # duplicate ever slipped past the import lock, updating only one copy
+    # leaves the one the user is actually looking at stale
+    workbook_names = frappe.get_all(
+        "Insights Workbook",
+        filters={"from_template": template_name},
+        pluck="name",
+        order_by="creation asc",
+    )
+    if not workbook_names:
         return create_workbook_from_template(template_name)
 
     lock_key = f"insights_template_import_{template_name.replace('/', '_')}"
     with filelock(lock_key, timeout=60):
-        _update_imported_workbook(template_name, workbook_name)
+        for workbook_name in workbook_names:
+            _update_imported_workbook(template_name, workbook_name)
         # commit inside the lock so a concurrent caller sees the finished copy,
         # not a half-rebuilt one
         frappe.db.commit()  # nosemgrep — intentional commit inside the import lock
 
-    return _template_import_result(workbook_name)
+    return _template_import_result(workbook_names[0])
 
 
 def sync_workbook_template_updates() -> None:
