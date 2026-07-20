@@ -127,6 +127,37 @@ body {
 	background-color: #f4f5f6;
 }
 
+/* -- page headers: the Fiori shell bar across every screen ----------------- */
+.fiori-theme .fiori-content header {
+	background: linear-gradient(180deg, #354a5f 0%, #30455a 100%);
+	border-color: #26374a !important;
+}
+
+.fiori-theme .fiori-content header .text-gray-900,
+.fiori-theme .fiori-content header .text-gray-800,
+.fiori-theme .fiori-content header .text-gray-700 {
+	color: #e2e9f0 !important;
+}
+
+.fiori-theme .fiori-content header .text-gray-600,
+.fiori-theme .fiori-content header .text-gray-500 {
+	color: #a9bccd !important;
+}
+
+/* ghost/subtle buttons and breadcrumbs in the header bar: light on dark */
+.fiori-theme .fiori-content header button {
+	color: #e2e9f0;
+}
+
+.fiori-theme .fiori-content header button.bg-gray-100,
+.fiori-theme .fiori-content header .bg-gray-100 {
+	background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.fiori-theme .fiori-content header button:hover:not(.bg-gray-900):not(.bg-surface-gray-7) {
+	background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
 /* -- accent: Fiori blue primary buttons ------------------------------------ */
 .fiori-theme button.bg-gray-900,
 .fiori-theme button.bg-surface-gray-7 {
