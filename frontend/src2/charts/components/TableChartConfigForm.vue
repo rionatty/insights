@@ -89,6 +89,14 @@ const measuresAndDimensions = computed(() => {
 
 const colOptions = computed(() => (measuresAndDimensions.value as ColumnOption[]) || [])
 
+// grouped-table mode: any configured row dimension can be the group key
+const groupByOptions = computed(() => [
+	{ label: 'None', value: '' },
+	...config.value.rows
+		.filter((r) => r.dimension_name)
+		.map((r) => ({ label: r.dimension_name, value: r.dimension_name })),
+])
+
 function editRule(index: number) {
 	const ruleToEditValue = config.value.conditional_formatting?.formats[index]
 
@@ -278,6 +286,24 @@ function updateTextWrap(column_name: string, wrap: boolean | undefined) {
 				v-if="config.values.length === 1"
 				label="Show Color Scale"
 				v-model="config.enable_color_scale"
+			/>
+		</div>
+	</CollapsibleSection>
+
+	<CollapsibleSection title="Grouping">
+		<div class="flex flex-col gap-3">
+			<InlineFormControlLabel label="Group By">
+				<FormControl
+					type="select"
+					:options="groupByOptions"
+					:modelValue="config.group_by || ''"
+					@update:modelValue="config.group_by = $event || undefined"
+				/>
+			</InlineFormControlLabel>
+			<Toggle
+				v-if="config.group_by"
+				label="Start Collapsed"
+				v-model="config.collapse_groups"
 			/>
 		</div>
 	</CollapsibleSection>

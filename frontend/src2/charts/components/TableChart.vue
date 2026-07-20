@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import QueryDataTable from '../../query/components/QueryDataTable.vue'
+import GroupedDataTable from './GroupedDataTable.vue'
 import { column } from '../../query/helpers'
 import { TableChartConfig } from '../../types/chart.types'
 import { SortDirection } from '../../types/query.types'
@@ -35,7 +36,15 @@ function onSortChange(column_name: string, sort_order: SortDirection) {
 <template>
 	<div class="flex h-full w-full flex-col divide-y overflow-hidden rounded bg-white shadow">
 		<ChartTitle :title="props.chart.doc.title" />
+		<GroupedDataTable
+			v-if="tableConfig.group_by"
+			:query="props.chart.dataQuery"
+			:group-by="tableConfig.group_by"
+			:compact="tableConfig.compact_numbers"
+			:start-collapsed="tableConfig.collapse_groups"
+		/>
 		<QueryDataTable
+			v-else
 			:query="props.chart.dataQuery"
 			:show-filter-row="tableConfig.show_filter_row"
 			:show-column-totals="tableConfig.show_column_totals"

@@ -72,6 +72,34 @@ const linkOptions = computed(() => {
 })
 
 const enabledLinks = computed(() => Object.keys(filter.links))
+
+// one-click scope: after linking one chart to a column, replicate the link
+// to every other chart that has a column with the same name (charts without
+// a match are left alone, so the filter stays chart-specific where needed)
+const canLinkAll = computed(() => {
+	const first = Object.values(filter.links).find(Boolean)
+	return Boolean(first) && enabledLinks.value.length < linkOptions.value.length
+})
+
+function linkAllCharts() {
+	const first = Object.values(filter.links).find(Boolean)
+	const targetName = first?.match(/`([^`]+)`$/)?.[1]
+	if (!targetName) return
+	const suffix = '`' + targetName + '`'
+	for (const chartOption of linkOptions.value) {
+		if (filter.links[chartOption.name]) continue
+		for (const group of chartOption.columns) {
+			const match: any = (group.items || []).find(
+				(o: any) => !o.disabled && String(o.value).endsWith(suffix),
+			)
+			if (match) {
+				filter.links[chartOption.name] = match.value
+				break
+			}
+		}
+	}
+}
+
 function toggleLink(link: string) {
 	if (enabledLinks.value.includes(link)) {
 		delete filter.links[link]
@@ -200,9 +228,18 @@ function saveEdit() {
 								/>
 							</div>
 							<div class="flex flex-col gap-1 border-t pt-3">
-								<label class="text-xs text-ink-gray-5">{{
-									__('Linked Charts')
-								}}</label>
+								<div class="flex items-center justify-between">
+									<label class="text-xs text-ink-gray-5">{{
+										__('Linked Charts')
+									}}</label>
+									<button
+										v-if="canLinkAll"
+										class="text-xs text-blue-600 hover:underline"
+										@click="linkAllCharts"
+									>
+										{{ __('Apply to all charts') }}
+									</button>
+								</div>
 								<div
 									v-for="link in linkOptions"
 									:key="link.name"

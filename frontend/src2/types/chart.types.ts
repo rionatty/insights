@@ -131,6 +131,10 @@ export type TableChartConfig = {
 	show_column_totals?: boolean
 	compact_numbers?: boolean
 	enable_color_scale?: boolean
+	// grouped-table mode: group rows by this column with expandable
+	// subtotal rows (sums of numeric columns per group)
+	group_by?: string
+	collapse_groups?: boolean
 	sticky_columns?: string[]
 	column_widths?: Record<string, number>
 	text_wrap?: Record<string, boolean>
