@@ -71,25 +71,43 @@ body {
  * .fiori-canvas (dashboard grids), .fiori-content (main content area).
  * ------------------------------------------------------------------------ */
 
-/* -- shell: dark slate sidebars matching the B1 Web Client ---------------- */
+/* -- shell: dark slate sidebars matching the B1 Web Client ----------------
+ * Text strategy: the shell sets a light base color that unclassed text
+ * inherits; the rules below then remap every explicit color token used in
+ * the sidebar components (Tailwind grays AND frappe-ui ink/surface tokens)
+ * so nothing renders dark-on-dark. */
 .fiori-theme .fiori-shell {
 	background: linear-gradient(180deg, #354a5f 0%, #2e4256 100%);
 	border-color: #26374a !important;
+	color: #e2e9f0;
 }
 
 .fiori-theme .fiori-shell .text-gray-900,
 .fiori-theme .fiori-shell .text-gray-800,
-.fiori-theme .fiori-shell .text-gray-700 {
+.fiori-theme .fiori-shell .text-gray-700,
+.fiori-theme .fiori-shell .text-ink-gray-9,
+.fiori-theme .fiori-shell .text-ink-gray-8,
+.fiori-theme .fiori-shell .text-ink-gray-7,
+.fiori-theme .fiori-shell .hover\:text-gray-800:hover {
 	color: #e2e9f0 !important;
 }
 
 .fiori-theme .fiori-shell .text-gray-600,
-.fiori-theme .fiori-shell .text-gray-500 {
+.fiori-theme .fiori-shell .text-gray-500,
+.fiori-theme .fiori-shell .text-ink-gray-6,
+.fiori-theme .fiori-shell .text-ink-gray-5 {
 	color: #a9bccd !important;
 }
 
+.fiori-theme .fiori-shell .text-gray-400,
+.fiori-theme .fiori-shell .text-ink-gray-4,
+.fiori-theme .fiori-shell .text-ink-gray-3 {
+	color: #8ba0b3 !important;
+}
+
 /* active nav item: translucent white pill with light text */
-.fiori-theme .fiori-shell .bg-white {
+.fiori-theme .fiori-shell .bg-white,
+.fiori-theme .fiori-shell .bg-surface-white {
 	background-color: rgba(255, 255, 255, 0.14) !important;
 }
 
@@ -99,13 +117,18 @@ body {
 
 .fiori-theme .fiori-shell .bg-gray-50,
 .fiori-theme .fiori-shell .bg-gray-100,
-.fiori-theme .fiori-shell .bg-gray-200 {
+.fiori-theme .fiori-shell .bg-gray-200,
+.fiori-theme .fiori-shell .bg-surface-gray-1,
+.fiori-theme .fiori-shell .bg-surface-gray-2,
+.fiori-theme .fiori-shell .bg-surface-gray-3 {
 	background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .fiori-theme .fiori-shell .hover\:bg-gray-100:hover,
 .fiori-theme .fiori-shell .hover\:bg-gray-200:hover,
-.fiori-theme .fiori-shell .hover\:bg-white:hover {
+.fiori-theme .fiori-shell .hover\:bg-white:hover,
+.fiori-theme .fiori-shell .hover\:bg-surface-gray-2:hover,
+.fiori-theme .fiori-shell .hover\:bg-surface-gray-3:hover {
 	background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -122,6 +145,15 @@ body {
 	padding: 1rem !important;
 }
 
+/* markdown text items sit directly on the dark canvas (not in a card) */
+.fiori-theme .fiori-canvas .prose.text-gray-700 {
+	color: #e2e9f0 !important;
+}
+
+.fiori-theme .fiori-canvas .prose.text-gray-700 :where(h1, h2, h3, h4, strong, a) {
+	color: #ffffff !important;
+}
+
 /* -- content area: Fiori light-gray behind working screens ----------------- */
 .fiori-theme .fiori-content {
 	background-color: #f4f5f6;
@@ -131,16 +163,24 @@ body {
 .fiori-theme .fiori-content header {
 	background: linear-gradient(180deg, #354a5f 0%, #30455a 100%);
 	border-color: #26374a !important;
+	color: #e2e9f0;
 }
 
 .fiori-theme .fiori-content header .text-gray-900,
 .fiori-theme .fiori-content header .text-gray-800,
-.fiori-theme .fiori-content header .text-gray-700 {
+.fiori-theme .fiori-content header .text-gray-700,
+.fiori-theme .fiori-content header .text-ink-gray-9,
+.fiori-theme .fiori-content header .text-ink-gray-8,
+.fiori-theme .fiori-content header .text-ink-gray-7,
+.fiori-theme .fiori-content header .hover\:text-gray-800:hover {
 	color: #e2e9f0 !important;
 }
 
 .fiori-theme .fiori-content header .text-gray-600,
-.fiori-theme .fiori-content header .text-gray-500 {
+.fiori-theme .fiori-content header .text-gray-500,
+.fiori-theme .fiori-content header .text-ink-gray-6,
+.fiori-theme .fiori-content header .text-ink-gray-5,
+.fiori-theme .fiori-content header .text-ink-gray-4 {
 	color: #a9bccd !important;
 }
 
