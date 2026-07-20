@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "title": "Receivables & Payables",
  "description": "Who owes you and whom you owe \u2014 open AR and AP with due-date worklists and the largest customer and supplier balances.",
  "notes": "Overdue and aging charts require the CVT_AR_AGING / CVT_AP_AGING views (run scripts/sap_b1_finance_views.sql from the Insights repo against the company database first) \u2014 these deduct partial payments. Balances come from the Business Partner master (OCRD); the due-date worklists use document totals.",

@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "title": "Sales Performance",
  "description": "Revenue, customers and margins at a glance \u2014 revenue trend with month-on-month KPIs, gross profit, top customers and items, and revenue split by warehouse.",
  "notes": "Built from posted AR Invoices (OINV/INV1), AR Credit Notes (ORIN), open Sales Orders (ORDR) and Deliveries (ODLN), cancelled documents excluded. Gross profit uses SAP B1's per-line gross profit. The delivery performance charts require the CVT_DELIVERY_PERF view (run scripts/sap_b1_finance_views.sql first).",

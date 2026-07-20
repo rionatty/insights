@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "title": "Financial Statements",
  "description": "The general ledger turned into statements \u2014 P&L waterfall and trend by account class, monthly cash in vs out, top expense accounts and balance sheet positions.",
  "notes": "Requires the CVT_FIN_* and CVT_KPI_SUMMARY views (run scripts/sap_b1_finance_views.sql from the Insights repo against the company database first). Built from Journal Entries (JDT1/OACT) and Payments (ORCT/OVPM). Amounts follow the sign convention: revenue positive, costs negative. Working capital is total assets minus total liabilities (B1's account classes do not separate current from non-current); DSO/DIO/DPO use trailing 12-month flows.",

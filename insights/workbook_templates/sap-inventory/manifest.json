@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "title": "Inventory Health",
  "description": "Stock levels, movement and gaps \u2014 on-hand by warehouse, in vs out movement trend, items out of stock and the biggest holdings.",
  "notes": "Built from Item Master (OITM), Warehouse Stock (OITW), the Inventory Journal (OINM) and open Inventory Transfer Requests (OWTQ). Quantities are in each item's stock UoM; mixed-UoM totals are indicative. Stock value, item-group and in/out value charts require the CVT_STOCK_VALUE, CVT_STOCK_MOVEMENT_MONTHLY and CVT_KPI_SUMMARY views (run scripts/sap_b1_finance_views.sql first). Stock value uses average cost from the item master.",

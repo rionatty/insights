@@ -243,7 +243,8 @@
        "shorten_numbers": false
       },
       {
-       "shorten_numbers": false
+       "decimal": 0,
+       "shorten_numbers": true
       }
      ],
      "comparison": false,

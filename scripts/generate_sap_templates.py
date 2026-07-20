@@ -224,7 +224,10 @@ def write_template(folder, manifest, wb_name, wb_title, queries, charts, dashboa
 
 def sap_manifest(title, description, notes, module):
     return {
-        "version": 1,
+        # bump whenever the generated templates change — the library only
+        # offers "Update" (and migrate only auto-updates pristine copies)
+        # when this is greater than the imported copy's stamped version
+        "version": 2,
         "title": title,
         "description": description,
         "notes": notes,
@@ -510,7 +513,8 @@ write_template(
                 measure("Items", "ItemCode", "count", "Integer"),
                 measure("Total On-hand Qty", "OnHand"),
             ],
-            [PLAIN, PLAIN],
+            # shorten the qty: a raw eight-digit number truncates in the tile
+            [PLAIN, MONEY],
             sort_order=0,
         ),
         number_chart(
